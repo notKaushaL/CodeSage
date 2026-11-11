@@ -1,0 +1,6 @@
+{
+  "name": "CodeSage AI — Intelligent Git Diff Reviewer",
+  "description": "Production-grade Git diff security & quality analyzer with AST/unidiff parsing, deterministic secret and static scanners, and line-anchored Gemini reasoning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
