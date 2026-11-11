@@ -12,7 +12,7 @@ import { ReviewHistoryView } from './components/ReviewHistoryView';
 import { ArchitectureView } from './components/ArchitectureView';
 import { SettingsModal } from './components/SettingsModal';
 import { ReviewReport } from './engine/types';
-import { SAMPLE_DIFFS, SampleDiff } from './samples/diffSamples';
+import { SampleDiff } from './samples/diffSamples';
 import { AlertCircle } from 'lucide-react';
 import { INITIAL_SEED_REPORT } from './samples/initialReport';
 
@@ -170,8 +170,18 @@ export default function App() {
     setActivePage('diff');
   };
 
+  const handleImportGitHubReport = (report: ReviewReport) => {
+    setCurrentReport(report);
+    setSelectedFileIndex(0);
+    setSelectedCategory(null);
+    setSelectedSeverity(null);
+    setActiveFindingId(null);
+    saveReportToHistory(report);
+    setActivePage('diff');
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex font-sans selection:bg-blue-500/20 selection:text-blue-900 dark:selection:text-blue-200">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#0d1117] text-[#171717] dark:text-[#e6edf3] flex font-sans selection:bg-[#0969da]/20 dark:selection:bg-[#2f81f7]/30 transition-colors">
       {/* Collapsible Application Sidebar */}
       <Sidebar
         activePage={activePage}
@@ -190,27 +200,29 @@ export default function App() {
         {/* Top Navigation */}
         <Navbar
           activePage={activePage}
+          onSelectPage={setActivePage}
           currentReport={currentReport}
           isLoading={isLoading}
           theme={theme}
           onToggleTheme={handleToggleTheme}
           onOpenUpload={() => setIsUploadOpen(true)}
+          onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
           onSelectSample={handleSelectSample}
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
         />
 
         {/* Content Body */}
-        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-5">
+        <main className="flex-1 max-w-[1440px] w-full mx-auto p-4 sm:p-6 flex flex-col gap-5">
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-3.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-center justify-between gap-3">
+            <div className="p-3.5 rounded-lg bg-[#ffebe9] dark:bg-[#f85149]/15 border border-[#cf222e]/30 dark:border-[#f85149]/40 text-[#cf222e] dark:text-[#f85149] text-xs flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{errorMessage}</span>
               </div>
               <button
                 onClick={() => setErrorMessage(null)}
-                className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium flex-shrink-0"
+                className="text-xs hover:underline font-medium flex-shrink-0"
               >
                 Dismiss
               </button>
@@ -219,45 +231,49 @@ export default function App() {
 
           {/* Loading Pipeline State Indicator */}
           {isLoading && (
-            <div className="p-5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col items-center justify-center text-center space-y-3">
-              <div className="w-8 h-8 rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-900 dark:border-t-zinc-100 animate-spin" />
+            <div className="p-5 rounded-lg bg-white dark:bg-[#161b22] border border-[#e4e4e7] dark:border-[#30363d] flex flex-col items-center justify-center text-center space-y-2.5">
+              <div className="w-7 h-7 rounded-full border-2 border-[#d4d4d8] dark:border-[#30363d] border-t-[#171717] dark:border-t-[#e6edf3] animate-spin" />
               <div>
-                <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                  Executing 5-Stage Hybrid Review Pipeline
+                <h3 className="text-xs font-semibold text-[#171717] dark:text-[#e6edf3]">
+                  Analyzing Code Changes...
                 </h3>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  Unidiff Lexer → Security Rules → Smart Chunker → Gemini 3.8 Flash → Risk Scorer
+                <p className="text-[11px] text-[#71717a] dark:text-[#8b949e] mt-0.5">
+                  Parsing diff lines, scanning for secrets & vulnerabilities, and computing health score
                 </p>
               </div>
             </div>
           )}
 
-          {/* View 1: Dashboard / Welcome Page */}
+          {/* View 1: Quick Start & Overview */}
           {activePage === 'dashboard' && (
             <DashboardView
               onOpenUpload={() => setIsUploadOpen(true)}
               onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
               onSelectSample={handleSelectSample}
               onSelectReport={handleSelectHistoryReport}
+              onImportGitHubSuccess={handleImportGitHubReport}
               history={history}
               currentReport={currentReport}
             />
           )}
 
-          {/* View 2: Review Workspace */}
+          {/* View 2: Code Review Workspace */}
           {activePage === 'diff' && currentReport && (
             <div className="space-y-4 flex flex-col flex-1">
-              {/* Review Header & Summary */}
+              {/* Review Summary Header */}
               <RiskMeter
+                diffTitle={currentReport.diff_title}
                 summary={currentReport.summary}
                 githubPr={currentReport.github_pr}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
                 selectedSeverity={selectedSeverity}
                 onSelectSeverity={setSelectedSeverity}
+                onOpenUpload={() => setIsUploadOpen(true)}
+                onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
               />
 
-              {/* Workspace Layout: Changed Files Sidebar + Diff Viewer */}
+              {/* Workspace Layout: Files & Issues Navigator + Diff Viewer */}
               <div className="flex flex-col lg:flex-row items-start gap-4 flex-1">
                 <FileSidebar
                   files={currentReport.parsed_diff?.files || []}
@@ -266,6 +282,11 @@ export default function App() {
                   onSelectFile={(idx) => {
                     setSelectedFileIndex(idx);
                     setActiveFindingId(null);
+                  }}
+                  activeFindingId={activeFindingId}
+                  onSelectFinding={(finding, fileIdx) => {
+                    setSelectedFileIndex(fileIdx);
+                    setActiveFindingId(finding.id);
                   }}
                 />
 
@@ -278,12 +299,14 @@ export default function App() {
                   selectedSeverity={selectedSeverity}
                   activeFindingId={activeFindingId}
                   onSelectFindingId={setActiveFindingId}
+                  theme={theme}
+                  defaultViewMode={defaultViewMode}
                 />
               </div>
             </div>
           )}
 
-          {/* View 3: Review History */}
+          {/* View 3: Past Reviews */}
           {activePage === 'history' && (
             <ReviewHistoryView
               history={history}
@@ -292,15 +315,15 @@ export default function App() {
             />
           )}
 
-          {/* View 4: Pipeline Inspector */}
+          {/* View 4: Engine Metrics */}
           {activePage === 'pipeline' && (
             <PipelineInspector report={currentReport} />
           )}
 
-          {/* View 5: Architecture */}
+          {/* View 5: How It Works */}
           {activePage === 'architecture' && <ArchitectureView />}
 
-          {/* View 6: Settings */}
+          {/* View 6: Preferences */}
           {activePage === 'settings' && (
             <SettingsModal
               theme={theme}
@@ -312,27 +335,21 @@ export default function App() {
         </main>
       </div>
 
-      {/* Upload Diff Modal */}
+      {/* Upload / Paste Diff Modal */}
       <UploadModal
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onSubmitDiff={handleAnalyzeDiff}
+        onSwitchToGitHub={() => setIsGitHubModalOpen(true)}
         isLoading={isLoading}
       />
 
-      {/* GitHub PR Import Modal (Public PRs only) */}
+      {/* GitHub PR Import Modal */}
       <GitHubImportModal
         isOpen={isGitHubModalOpen}
         onClose={() => setIsGitHubModalOpen(false)}
-        onImportSuccess={(report) => {
-          setCurrentReport(report);
-          setSelectedFileIndex(0);
-          setSelectedCategory(null);
-          setSelectedSeverity(null);
-          setActiveFindingId(null);
-          saveReportToHistory(report);
-          setActivePage('diff');
-        }}
+        onImportSuccess={handleImportGitHubReport}
+        onSwitchToUpload={() => setIsUploadOpen(true)}
       />
     </div>
   );

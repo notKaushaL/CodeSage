@@ -1,146 +1,112 @@
 import React from 'react';
 import { 
-  GitBranch, 
-  Layers, 
   ShieldCheck, 
-  Cpu, 
-  Terminal, 
-  CheckCircle2, 
-  Zap, 
-  Box,
-  Binary,
-  ArrowRight
+  Zap
 } from 'lucide-react';
 
 export const ArchitectureView: React.FC = () => {
+  const steps = [
+    {
+      num: '01',
+      title: 'Unified Diff Parser',
+      summary: 'Splits raw git patches into files, hunks, and added/deleted/context lines while tracking exact old and new line numbers.',
+      meta: 'Exact line anchoring',
+    },
+    {
+      num: '02',
+      title: 'Static Security Scanner',
+      summary: 'Uses 10 deterministic security rules and Shannon entropy analysis to catch hardcoded secrets, SQL injection, and command execution.',
+      meta: '0 AI tokens · < 5ms',
+    },
+    {
+      num: '03',
+      title: 'Smart Context Chunker',
+      summary: 'Packs modified lines with surrounding context while collapsing unchanged boilerplate to keep token usage low.',
+      meta: 'Context window packing',
+    },
+    {
+      num: '04',
+      title: 'Gemini 3.8 Flash',
+      summary: 'Evaluates subtle logic flaws, race conditions, and missing error handling, returning structured findings with suggested code patches.',
+      meta: '10s circuit timeout',
+    },
+    {
+      num: '05',
+      title: 'Deduplication & Scoring',
+      summary: 'Combines static and AI findings, verifies line numbers against the parsed diff, and computes a 0–100 health score.',
+      meta: '0–100 health score',
+    },
+  ];
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Hero Card */}
-      <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
-        <div className="space-y-2 max-w-3xl">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-              System Architecture & Core Pipeline
-            </span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-            Hybrid Deterministic + Gemini 3.8 Flash Engine
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-            Engineered to address core distributed systems and AI engineering challenges: context window management, token-cost optimization, hybrid deterministic + probabilistic analysis, and zero-hallucination line mapping.
-          </p>
+      {/* Header Section */}
+      <div className="bg-white dark:bg-[#161b22] p-6 sm:p-8 rounded-lg border border-[#e4e4e7] dark:border-[#30363d] space-y-2">
+        <span className="text-xs font-medium text-[#0969da] dark:text-[#58a6ff]">
+          System Architecture & Workflow
+        </span>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#171717] dark:text-[#e6edf3] tracking-tight">
+          How CodeSage Reviews Your Code
+        </h1>
+        <p className="text-xs sm:text-sm text-[#52525b] dark:text-[#8b949e] leading-relaxed max-w-3xl">
+          CodeSage combines fast, deterministic static security rules with Gemini 3.8 Flash reasoning so every review is accurate, fast, and anchored to exact line numbers.
+        </p>
+      </div>
+
+      {/* 5-Step Flow Grid */}
+      <div className="bg-white dark:bg-[#161b22] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] p-6 space-y-4">
+        <h2 className="text-sm font-semibold text-[#171717] dark:text-[#e6edf3]">
+          5-Stage Review Pipeline
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3.5">
+          {steps.map((step) => (
+            <div
+              key={step.num}
+              className="bg-[#fafafa] dark:bg-[#0d1117] p-4 rounded-md border border-[#e4e4e7] dark:border-[#30363d] flex flex-col justify-between space-y-3"
+            >
+              <div className="space-y-1.5">
+                <span className="text-xs font-mono font-bold text-[#0969da] dark:text-[#58a6ff] block">
+                  {step.num}.
+                </span>
+                <h3 className="text-xs font-semibold text-[#171717] dark:text-[#e6edf3]">
+                  {step.title}
+                </h3>
+                <p className="text-xs text-[#52525b] dark:text-[#8b949e] leading-relaxed">
+                  {step.summary}
+                </p>
+              </div>
+              <div className="pt-2 border-t border-[#e4e4e7] dark:border-[#21262d] text-[11px] font-mono text-[#71717a] dark:text-[#8b949e]">
+                {step.meta}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Interactive System Pipeline Flow Diagram */}
-      <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-4">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-zinc-500" />
-          <span>Pipeline Ingestion & Analysis Flow</span>
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          {/* Step 1 */}
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2.5">
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 uppercase">
-                Step 01
-              </span>
-              <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Unidiff Lexer</h4>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Splits raw unified patches into Files, Hunks, and Line types (ADDED, DELETED, CONTEXT). Maps offsets to physical line numbers.
-              </p>
-            </div>
-            <div className="text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded border border-zinc-200 dark:border-zinc-800">
-              @@ -a,b +c,d @@ mapping
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2.5">
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-                Step 02
-              </span>
-              <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Security Pre-Filter</h4>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Zero LLM Tokens. Shannon entropy scanner catches AWS keys, JWT tokens, and private keys. Flags SQL injection & eval() sinks.
-              </p>
-            </div>
-            <div className="text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded border border-zinc-200 dark:border-zinc-800">
-              Entropy &gt; 4.0 + Regex sinks
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2.5">
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase">
-                Step 03
-              </span>
-              <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Smart Chunker</h4>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Dynamically groups hunks within 4,000 token limits with 2-line sliding context windows to preserve enclosing functions.
-              </p>
-            </div>
-            <div className="text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded border border-zinc-200 dark:border-zinc-800">
-              Token budget packing
-            </div>
-          </div>
-
-          {/* Step 4 */}
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2.5">
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-purple-600 dark:text-purple-400 uppercase">
-                Step 04
-              </span>
-              <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Gemini 3.8 Flash</h4>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Analyzes concurrency, subtle logic regressions, and algorithmic antipatterns. Emits structured JSON findings with suggested fixes.
-              </p>
-            </div>
-            <div className="text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded border border-zinc-200 dark:border-zinc-800">
-              JSON schema validation
-            </div>
-          </div>
-
-          {/* Step 5 */}
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2.5">
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-red-600 dark:text-red-400 uppercase">
-                Step 05
-              </span>
-              <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Deduplication & Risk</h4>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Consolidates overlapping findings across layers, upgrades confidence to Hybrid Consensus, and calculates composite 0-100 risk score.
-              </p>
-            </div>
-            <div className="text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded border border-zinc-200 dark:border-zinc-800">
-              Score = 100 - [Penalties]
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Engineering Design Decisions */}
+      {/* Core Engineering Principles */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-zinc-900 p-5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2">
+        <div className="bg-white dark:bg-[#161b22] p-5 rounded-lg border border-[#e4e4e7] dark:border-[#30363d] space-y-2">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-500" />
-            <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Why a Hybrid Architecture?</h4>
+            <Zap className="w-4 h-4 text-[#d97706] dark:text-[#d29922]" />
+            <h3 className="text-xs font-semibold text-[#171717] dark:text-[#e6edf3]">
+              Why Combine Static Rules with AI?
+            </h3>
           </div>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Pure LLM-based diff reviewers hallucinate line numbers, miss obvious API keys obscured by whitespace, and cost 10x-50x more in tokens. Pure static scanners miss multi-file business logic flaws and race conditions. Combining deterministic scanning with Gemini 3.8 Flash delivers precision with high semantic reasoning.
+          <p className="text-xs text-[#52525b] dark:text-[#8b949e] leading-relaxed">
+            Pure AI reviewers can miss obfuscated API keys or hallucinate line numbers, while pure static regex tools miss multi-line logic bugs. Running deterministic rules first and pairing them with Gemini 3.8 Flash gives you instant secret detection plus deep semantic review.
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 p-5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2">
+        <div className="bg-white dark:bg-[#161b22] p-5 rounded-lg border border-[#e4e4e7] dark:border-[#30363d] space-y-2">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Physical Line-Number Anchoring</h4>
+            <ShieldCheck className="w-4 h-4 text-[#1a7f37] dark:text-[#3fb950]" />
+            <h3 className="text-xs font-semibold text-[#171717] dark:text-[#e6edf3]">
+              Exact Physical Line Mapping
+            </h3>
           </div>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Diff hunks offset original line numbers by additions and deletions. The custom unidiff lexer computes two independent monotonic counters (<code className="font-mono text-[11px]">oldLine</code> and <code className="font-mono text-[11px]">newLine</code>) for every hunk, guaranteeing that findings anchor directly to the exact target line in the editor.
+          <p className="text-xs text-[#52525b] dark:text-[#8b949e] leading-relaxed">
+            Every hunk in a Git diff shifts line numbers as lines are added or removed. CodeSage tracks independent old and new line counters across every hunk so inline review cards always attach to the exact line of code.
           </p>
         </div>
       </div>

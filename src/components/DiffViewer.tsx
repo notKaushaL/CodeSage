@@ -6,25 +6,22 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Keyboard, 
-  X,
-  Target
+  X
 } from 'lucide-react';
-import { DiffFile, DiffHunk, DiffLine, Finding } from '../engine/types';
+import { DiffFile, Finding } from '../engine/types';
 import { InlineFindingCard } from './InlineFindingCard';
 import { alignSplitDiffHunk, SplitDiffRow } from '../engine/splitAligner';
 import { 
   resolveLanguageId, 
   highlightLines, 
   getCachedLineTokens,
-  HighlightedToken, 
-  SupportedLang 
+  HighlightedToken
 } from '../utils/highlighter';
 import { 
   getOrderedFindings, 
   getNextFindingIndex, 
   getPrevFindingIndex, 
-  isEditableElement,
-  OrderedFinding 
+  isEditableElement
 } from '../utils/navigation';
 
 interface DiffViewerProps {
@@ -36,6 +33,8 @@ interface DiffViewerProps {
   selectedSeverity: string | null;
   activeFindingId?: string | null;
   onSelectFindingId?: (id: string | null) => void;
+  theme?: 'light' | 'dark';
+  defaultViewMode?: 'unified' | 'split';
 }
 
 export const DiffViewer: React.FC<DiffViewerProps> = ({
@@ -47,11 +46,17 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   selectedSeverity,
   activeFindingId: propActiveFindingId,
   onSelectFindingId: propOnSelectFindingId,
+  theme = 'dark',
+  defaultViewMode = 'unified',
 }) => {
-  const [viewMode, setViewMode] = useState<'unified' | 'split'>('unified');
+  const [viewMode, setViewMode] = useState<'unified' | 'split'>(defaultViewMode);
   const [localActiveFindingId, setLocalActiveFindingId] = useState<string | null>(null);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [highlightedTokensMap, setHighlightedTokensMap] = useState<Map<string, HighlightedToken[]>>(new Map());
+
+  useEffect(() => {
+    setViewMode(defaultViewMode);
+  }, [defaultViewMode]);
 
   const activeFindingId = propActiveFindingId !== undefined ? propActiveFindingId : localActiveFindingId;
   const setActiveFindingId = (id: string | null) => {
@@ -106,14 +111,13 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     return resolveLanguageId(activeFile.language, path);
   }, [activeFile]);
 
-  // Asynchronously tokenize active file lines using Shiki without blocking the UI
+  // Asynchronously tokenize active file lines using Shiki for current theme ('light' | 'dark')
   useEffect(() => {
     if (!activeFile || !detectedLangId) return;
 
     let isCancelled = false;
     const allFileLines: string[] = [];
 
-    // Collect all unique line contents from hunks
     for (const hunk of activeFile.hunks) {
       for (const line of hunk.lines) {
         allFileLines.push(line.content);
@@ -122,7 +126,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
     if (allFileLines.length === 0) return;
 
-    highlightLines(allFileLines, detectedLangId)
+    highlightLines(allFileLines, detectedLangId, theme)
       .then((tokenizedLines) => {
         if (isCancelled) return;
         setHighlightedTokensMap((prev) => {
@@ -130,7 +134,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           allFileLines.forEach((lineText, idx) => {
             const tokens = tokenizedLines[idx];
             if (tokens) {
-              next.set(`${detectedLangId}:${lineText}`, tokens);
+              next.set(`${theme}:${detectedLangId}:${lineText}`, tokens);
             }
           });
           return next;
@@ -143,16 +147,18 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [activeFile, detectedLangId]);
+  }, [activeFile, detectedLangId, theme]);
 
-  // Helper to render tokenized code line with Shiki styling or fallback
+  // Render tokenized code line with theme-accurate Shiki styling
   const renderLineContent = (content: string) => {
     if (!content) {
       return <span>&nbsp;</span>;
     }
 
     if (detectedLangId) {
-      const tokens = highlightedTokensMap.get(`${detectedLangId}:${content}`) || getCachedLineTokens(content, detectedLangId);
+      const tokens =
+        highlightedTokensMap.get(`${theme}:${detectedLangId}:${content}`) ||
+        getCachedLineTokens(content, detectedLangId, theme);
       if (tokens && tokens.length > 0) {
         return (
           <>
@@ -172,7 +178,6 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       }
     }
 
-    // Default plain text fallback
     return <span>{content}</span>;
   };
 
@@ -181,14 +186,12 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     if (idx < 0 || idx >= allOrderedFindings.length) return;
     const target = allOrderedFindings[idx];
 
-    // If target finding is in a different file, notify parent to select that file
     if (target.fileIndex !== selectedFileIndex && onSelectFileIndex) {
       onSelectFileIndex(target.fileIndex);
     }
 
     setActiveFindingId(target.finding.id);
 
-    // Smooth scroll to target element
     setTimeout(() => {
       const findingEl = document.getElementById(`finding-${target.finding.id}`);
       if (findingEl) {
@@ -216,7 +219,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     setActiveFindingId(null);
   };
 
-  // Global Keyboard Navigation (j, k, Esc, u, s, ?) with strict input suppression
+  // Global Keyboard Navigation (j, k, Esc, u, s, ?)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isEditableElement(e.target)) {
@@ -248,70 +251,76 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
   if (!activeFile) {
     return (
-      <div className="flex-1 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-12 text-center text-zinc-500">
-        <FileCode className="w-10 h-10 mx-auto text-zinc-400 mb-2.5" />
+      <div className="flex-1 bg-white dark:bg-[#161b22] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] p-12 text-center text-[#71717a] dark:text-[#8b949e]">
+        <FileCode className="w-10 h-10 mx-auto text-[#a1a1aa] dark:text-[#6e7681] mb-2.5" />
         <p className="text-sm font-medium">No modified files to display in this review run.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 min-w-0 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm flex flex-col relative">
-      {/* File & Navigation Header Bar */}
-      <div className="bg-zinc-50 dark:bg-zinc-950 px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
-        {/* Left: File metadata */}
+    <div className="flex-1 min-w-0 bg-white dark:bg-[#0d1117] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] overflow-hidden flex flex-col relative transition-colors">
+      {/* GitHub PR File Header Bar */}
+      <div className="bg-[#f6f8fa] dark:bg-[#161b22] px-4 py-2.5 border-b border-[#e4e4e7] dark:border-[#30363d] flex flex-wrap items-center justify-between gap-3">
+        {/* Left: File path & language */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="p-1.5 rounded bg-zinc-200/60 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 flex-shrink-0">
-            <FileCode className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                {activeFile.newPath !== '/dev/null' ? activeFile.newPath : activeFile.oldPath}
-              </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700">
-                {detectedLangId ? `${activeFile.language} (Shiki)` : activeFile.language}
-              </span>
-            </div>
+          <FileCode className="w-4 h-4 text-[#52525b] dark:text-[#8b949e] flex-shrink-0" />
+          <div className="min-w-0 flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-xs font-semibold text-[#171717] dark:text-[#e6edf3] truncate">
+              {activeFile.newPath !== '/dev/null' ? activeFile.newPath : activeFile.oldPath}
+            </span>
+            <span className="text-[#a1a1aa] dark:text-[#484f58]">·</span>
+            <span className="text-[11px] font-mono text-[#52525b] dark:text-[#8b949e]">
+              {activeFile.language}
+            </span>
+            <span className="text-[#a1a1aa] dark:text-[#484f58]">·</span>
+            <span className="text-xs font-mono tabular-nums">
+              <span className="text-[#1a7f37] dark:text-[#3fb950] font-semibold">+{activeFile.addedLineCount}</span>{' '}
+              <span className="text-[#cf222e] dark:text-[#f85149] font-semibold">-{activeFile.deletedLineCount}</span>
+            </span>
             {activeFile.isRename && (
-              <span className="text-[11px] text-zinc-500 font-mono">
-                renamed from {activeFile.oldPath}
+              <span className="text-[11px] text-[#71717a] dark:text-[#8b949e] font-mono">
+                (renamed from {activeFile.oldPath})
               </span>
             )}
           </div>
         </div>
 
-        {/* Right: Finding Navigation & View Mode Controls */}
+        {/* Right: Issue Stepper, View Switcher, & Shortcuts */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Finding Navigator Controls */}
+          {/* Issue Stepper */}
           {allOrderedFindings.length > 0 && (
-            <div className="flex items-center bg-white dark:bg-zinc-900 p-0.5 rounded border border-zinc-200 dark:border-zinc-700 text-xs">
+            <div className="inline-flex items-center bg-white dark:bg-[#0d1117] p-0.5 rounded-md border border-[#d4d4d8] dark:border-[#30363d] text-xs">
               <button
                 onClick={handlePrevFinding}
-                className="p-1 rounded text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                title="Previous finding (k)"
+                className="p-1 rounded text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors"
+                title="Previous issue (k)"
                 aria-label="Previous finding"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
 
-              <span className="px-2 text-[11px] font-mono font-medium text-zinc-700 dark:text-zinc-300 select-none">
+              <button
+                onClick={handleNextFinding}
+                className="px-2 py-0.5 text-[11px] font-mono font-medium text-[#171717] dark:text-[#e6edf3] hover:text-[#0969da] dark:hover:text-[#58a6ff] transition-colors select-none whitespace-nowrap"
+                title="Click to jump to next issue (j)"
+              >
                 {currentFindingIdx >= 0 ? (
                   <span>
-                    Finding <strong className="text-blue-600 dark:text-blue-400">{currentFindingIdx + 1}</strong> of{' '}
+                    Issue <strong className="text-[#0969da] dark:text-[#58a6ff]">{currentFindingIdx + 1}</strong> of{' '}
                     {allOrderedFindings.length}
                   </span>
                 ) : (
                   <span>
-                    {allOrderedFindings.length} {allOrderedFindings.length === 1 ? 'Finding' : 'Findings'}
+                    Jump to Issue ({allOrderedFindings.length})
                   </span>
                 )}
-              </span>
+              </button>
 
               <button
                 onClick={handleNextFinding}
-                className="p-1 rounded text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                title="Next finding (j)"
+                className="p-1 rounded text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors"
+                title="Next issue (j)"
                 aria-label="Next finding"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -320,8 +329,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               {activeFindingId && (
                 <button
                   onClick={handleClearFinding}
-                  className="p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border-l border-zinc-200 dark:border-zinc-700 ml-0.5"
-                  title="Clear finding focus (Esc)"
+                  className="p-1 rounded text-[#71717a] hover:text-[#cf222e] dark:hover:text-[#f85149] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors border-l border-[#e4e4e7] dark:border-[#30363d] ml-0.5"
+                  title="Clear active issue focus (Esc)"
                   aria-label="Clear active finding"
                 >
                   <X className="w-3 h-3" />
@@ -330,14 +339,14 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             </div>
           )}
 
-          {/* Unified vs Split Mode Switcher */}
-          <div className="flex items-center bg-white dark:bg-zinc-900 p-0.5 rounded border border-zinc-200 dark:border-zinc-700 text-xs">
+          {/* Unified vs Split View Switcher */}
+          <div className="inline-flex items-center bg-white dark:bg-[#0d1117] p-0.5 rounded-md border border-[#d4d4d8] dark:border-[#30363d] text-xs">
             <button
               onClick={() => setViewMode('unified')}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors whitespace-nowrap ${
                 viewMode === 'unified'
-                  ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium shadow-xs'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                  ? 'bg-[#f4f4f5] dark:bg-[#21262d] text-[#171717] dark:text-[#e6edf3] font-semibold'
+                  : 'text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3]'
               }`}
               title="Unified diff view (u)"
             >
@@ -346,10 +355,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             </button>
             <button
               onClick={() => setViewMode('split')}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors whitespace-nowrap ${
                 viewMode === 'split'
-                  ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium shadow-xs'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                  ? 'bg-[#f4f4f5] dark:bg-[#21262d] text-[#171717] dark:text-[#e6edf3] font-semibold'
+                  : 'text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3]'
               }`}
               title="Split side-by-side diff view (s)"
             >
@@ -361,43 +370,37 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           {/* Keyboard Shortcuts Help Button */}
           <button
             onClick={() => setShowShortcutsModal(true)}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-white dark:bg-[#0d1117] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] transition-colors whitespace-nowrap"
             title="Keyboard Shortcuts (?)"
             aria-label="View Keyboard Shortcuts"
           >
-            <Keyboard className="w-3.5 h-3.5 text-zinc-500" />
+            <Keyboard className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Shortcuts</span>
           </button>
-
-          {/* Diff Stats Badge */}
-          <div className="text-xs font-mono px-2 py-1 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300">
-            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">+{activeFile.addedLineCount}</span>{' '}
-            <span className="text-red-700 dark:text-red-400 font-semibold">-{activeFile.deletedLineCount}</span>
-          </div>
         </div>
       </div>
 
-      {/* Diff Content Body */}
+      {/* Diff Code Body */}
       <div 
         ref={diffContainerRef}
-        className="overflow-x-auto divide-y divide-zinc-200 dark:divide-zinc-800 font-mono text-xs max-h-[calc(100vh-14rem)] overflow-y-auto bg-white dark:bg-zinc-950"
+        className="overflow-x-auto font-mono text-xs max-h-[calc(100vh-14rem)] overflow-y-auto bg-white dark:bg-[#0d1117]"
       >
         {activeFile.hunks.map((hunk, hunkIdx) => {
           return (
-            <div key={hunkIdx} className="bg-white dark:bg-zinc-950">
-              {/* Hunk Header */}
-              <div className="bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 px-4 py-1.5 border-y border-zinc-200 dark:border-zinc-800 flex items-center justify-between font-mono text-[11px] select-none sticky top-0 z-10">
-                <span className="font-semibold text-blue-700 dark:text-blue-400">{hunk.header}</span>
+            <div key={hunkIdx} className="bg-white dark:bg-[#0d1117]">
+              {/* GitHub-Style Hunk Header */}
+              <div className="bg-[#f6f8fa] dark:bg-[#161b22] text-[#57606a] dark:text-[#8b949e] px-4 py-1.5 border-y border-[#e4e4e7] dark:border-[#30363d] flex items-center justify-between font-mono text-[11px] select-none sticky top-0 z-10">
+                <span className="font-semibold text-[#0969da] dark:text-[#58a6ff]">{hunk.header}</span>
                 {hunk.enclosingScope && (
-                  <span className="text-zinc-500 dark:text-zinc-400 truncate max-w-sm hidden sm:inline">
-                    scope: {hunk.enclosingScope}
+                  <span className="text-[#57606a] dark:text-[#8b949e] truncate max-w-md hidden sm:inline">
+                    {hunk.enclosingScope}
                   </span>
                 )}
               </div>
 
               {/* View Mode A: Unified View */}
               {viewMode === 'unified' ? (
-                <div className="divide-y divide-zinc-100 dark:divide-zinc-900/60">
+                <div>
                   {hunk.lines.map((line, lineIdx) => {
                     const lineNum = line.newLineNumber;
                     const lineFindings = lineNum ? findingsByLineNumber.get(lineNum) : undefined;
@@ -405,25 +408,25 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     const isDeleted = line.type === 'DELETED';
                     const hasActiveFinding = lineFindings?.some((f) => f.id === activeFindingId);
 
-                    let rowBg = 'hover:bg-zinc-50 dark:hover:bg-zinc-900/40 text-zinc-800 dark:text-zinc-200';
-                    let gutterColor = 'text-zinc-400 dark:text-zinc-500';
-                    let symbolColor = 'text-zinc-400 dark:text-zinc-500';
+                    let rowBg = 'hover:bg-[#f6f8fa] dark:hover:bg-[#161b22]/70 text-[#1f2328] dark:text-[#e6edf3]';
+                    let gutterClass = 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]';
+                    let symbolColor = 'text-[#6e7781] dark:text-[#6e7681]';
                     let symbol = ' ';
 
                     if (isAdded) {
-                      rowBg = 'bg-emerald-50/70 dark:bg-emerald-950/25 hover:bg-emerald-50 dark:hover:bg-emerald-950/35 text-zinc-900 dark:text-emerald-200';
-                      gutterColor = 'text-emerald-700 dark:text-emerald-500';
-                      symbolColor = 'text-emerald-700 dark:text-emerald-400 font-bold';
+                      rowBg = 'gh-diff-add text-[#1f2328] dark:text-[#e6edf3]';
+                      gutterClass = 'gh-diff-add-gutter';
+                      symbolColor = 'text-[#116329] dark:text-[#3fb950] font-semibold';
                       symbol = '+';
                     } else if (isDeleted) {
-                      rowBg = 'bg-red-50/70 dark:bg-red-950/25 hover:bg-red-50 dark:hover:bg-red-950/35 text-zinc-900 dark:text-red-300';
-                      gutterColor = 'text-red-700 dark:text-red-500';
-                      symbolColor = 'text-red-700 dark:text-red-400 font-bold';
+                      rowBg = 'gh-diff-del text-[#1f2328] dark:text-[#e6edf3]';
+                      gutterClass = 'gh-diff-del-gutter';
+                      symbolColor = 'text-[#cf222e] dark:text-[#f85149] font-semibold';
                       symbol = '-';
                     }
 
                     if (hasActiveFinding) {
-                      rowBg = 'bg-blue-50/80 dark:bg-blue-950/30 hover:bg-blue-50 dark:hover:bg-blue-950/40 border-l-2 border-blue-500';
+                      rowBg = 'bg-[#ddf4ff] dark:bg-[#388bfd]/20';
                     }
 
                     return (
@@ -433,26 +436,26 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                           className={`flex items-stretch transition-colors ${rowBg}`}
                         >
                           {/* Old Line # */}
-                          <div className={`w-12 py-1 px-2 text-right select-none font-mono text-[11px] ${gutterColor} bg-zinc-50/80 dark:bg-zinc-950/60 border-r border-zinc-200 dark:border-zinc-800/80`}>
+                          <div className={`w-12 py-0.5 px-2 text-right select-none font-mono text-[11px] tabular-nums border-r border-[#e4e4e7]/70 dark:border-[#30363d]/70 ${gutterClass}`}>
                             {line.oldLineNumber || ''}
                           </div>
                           {/* New Line # */}
-                          <div className={`w-12 py-1 px-2 text-right select-none font-mono text-[11px] ${gutterColor} bg-zinc-50/80 dark:bg-zinc-950/60 border-r border-zinc-200 dark:border-zinc-800/80`}>
+                          <div className={`w-12 py-0.5 px-2 text-right select-none font-mono text-[11px] tabular-nums border-r border-[#e4e4e7] dark:border-[#30363d] ${gutterClass}`}>
                             {line.newLineNumber || ''}
                           </div>
                           {/* +/- Symbol */}
-                          <div className={`w-6 py-1 text-center select-none ${symbolColor}`}>
+                          <div className={`w-6 py-0.5 text-center select-none ${symbolColor}`}>
                             {symbol}
                           </div>
                           {/* Code Content with Syntax Tokens */}
-                          <div className="flex-1 py-1 px-3 whitespace-pre overflow-x-auto leading-relaxed">
+                          <div className="flex-1 py-0.5 px-3 whitespace-pre overflow-x-auto leading-5">
                             {renderLineContent(line.content)}
                           </div>
                         </div>
 
                         {/* Inline Findings Pinned Below Line */}
                         {lineFindings && lineFindings.length > 0 && (
-                          <div className="bg-zinc-50/60 dark:bg-zinc-950/80 border-y border-zinc-200 dark:border-zinc-800 py-1">
+                          <div className="bg-[#f6f8fa] dark:bg-[#0d1117] border-y border-[#e4e4e7] dark:border-[#30363d] py-1">
                             {lineFindings.map((finding) => (
                               <InlineFindingCard
                                 key={finding.id}
@@ -468,30 +471,34 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 </div>
               ) : (
                 /* View Mode B: Split Side-by-Side View */
-                <div className="divide-y divide-zinc-100 dark:divide-zinc-900/60">
+                <div>
                   {alignSplitDiffHunk(hunk, findingsByLineNumber).map((row: SplitDiffRow) => {
                     const hasActiveFinding = row.findings?.some((f) => f.id === activeFindingId);
+                    const isLeftDeleted = row.left && (row.type === 'deleted' || row.type === 'modified');
+                    const isRightAdded = row.right && (row.type === 'added' || row.type === 'modified');
 
                     return (
                       <React.Fragment key={row.id}>
-                        <div className={`grid grid-cols-2 divide-x divide-zinc-200 dark:divide-zinc-800 ${hasActiveFinding ? 'bg-blue-50/60 dark:bg-blue-950/30' : ''}`}>
+                        <div className={`grid grid-cols-2 divide-x divide-[#e4e4e7] dark:divide-[#30363d] ${hasActiveFinding ? 'bg-[#ddf4ff] dark:bg-[#388bfd]/20' : ''}`}>
                           {/* Left Column: Original / Deletions */}
                           <div
                             className={`flex items-stretch min-w-0 ${
-                              row.left && (row.type === 'deleted' || row.type === 'modified')
-                                ? 'bg-red-50/70 dark:bg-red-950/25 text-zinc-900 dark:text-red-300'
+                              isLeftDeleted
+                                ? 'gh-diff-del text-[#1f2328] dark:text-[#e6edf3]'
                                 : !row.left
-                                ? 'bg-zinc-100/50 dark:bg-zinc-950/60 opacity-40 select-none'
-                                : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/40 text-zinc-800 dark:text-zinc-200'
+                                ? 'bg-[#f6f8fa] dark:bg-[#161b22]/50 select-none'
+                                : 'hover:bg-[#f6f8fa] dark:hover:bg-[#161b22]/70 text-[#1f2328] dark:text-[#e6edf3]'
                             }`}
                           >
-                            <div className="w-12 py-1 px-2 text-right select-none text-[11px] text-zinc-400 dark:text-zinc-500 bg-zinc-50/80 dark:bg-zinc-950/60 border-r border-zinc-200 dark:border-zinc-800/80 flex-shrink-0 font-mono">
+                            <div className={`w-12 py-0.5 px-2 text-right select-none text-[11px] font-mono tabular-nums border-r border-[#e4e4e7] dark:border-[#30363d] flex-shrink-0 ${
+                              isLeftDeleted ? 'gh-diff-del-gutter' : 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]'
+                            }`}>
                               {row.left?.oldLineNumber || ''}
                             </div>
-                            <div className="w-6 py-1 text-center select-none text-red-700 dark:text-red-400 font-bold flex-shrink-0">
-                              {row.left && (row.type === 'deleted' || row.type === 'modified') ? '-' : ' '}
+                            <div className="w-6 py-0.5 text-center select-none text-[#cf222e] dark:text-[#f85149] font-semibold flex-shrink-0">
+                              {isLeftDeleted ? '-' : ' '}
                             </div>
-                            <div className="flex-1 py-1 px-3 whitespace-pre overflow-x-auto leading-relaxed">
+                            <div className="flex-1 py-0.5 px-3 whitespace-pre overflow-x-auto leading-5">
                               {row.left ? renderLineContent(row.left.content) : <span>&nbsp;</span>}
                             </div>
                           </div>
@@ -500,20 +507,22 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                           <div
                             id={row.right?.newLineNumber ? `line-new-${row.right.newLineNumber}` : undefined}
                             className={`flex items-stretch min-w-0 ${
-                              row.right && (row.type === 'added' || row.type === 'modified')
-                                ? 'bg-emerald-50/70 dark:bg-emerald-950/25 text-zinc-900 dark:text-emerald-200'
+                              isRightAdded
+                                ? 'gh-diff-add text-[#1f2328] dark:text-[#e6edf3]'
                                 : !row.right
-                                ? 'bg-zinc-100/50 dark:bg-zinc-950/60 opacity-40 select-none'
-                                : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/40 text-zinc-800 dark:text-zinc-200'
+                                ? 'bg-[#f6f8fa] dark:bg-[#161b22]/50 select-none'
+                                : 'hover:bg-[#f6f8fa] dark:hover:bg-[#161b22]/70 text-[#1f2328] dark:text-[#e6edf3]'
                             }`}
                           >
-                            <div className="w-12 py-1 px-2 text-right select-none text-[11px] text-zinc-400 dark:text-zinc-500 bg-zinc-50/80 dark:bg-zinc-950/60 border-r border-zinc-200 dark:border-zinc-800/80 flex-shrink-0 font-mono">
+                            <div className={`w-12 py-0.5 px-2 text-right select-none text-[11px] font-mono tabular-nums border-r border-[#e4e4e7] dark:border-[#30363d] flex-shrink-0 ${
+                              isRightAdded ? 'gh-diff-add-gutter' : 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]'
+                            }`}>
                               {row.right?.newLineNumber || ''}
                             </div>
-                            <div className="w-6 py-1 text-center select-none text-emerald-700 dark:text-emerald-400 font-bold flex-shrink-0">
-                              {row.right && (row.type === 'added' || row.type === 'modified') ? '+' : ' '}
+                            <div className="w-6 py-0.5 text-center select-none text-[#116329] dark:text-[#3fb950] font-semibold flex-shrink-0">
+                              {isRightAdded ? '+' : ' '}
                             </div>
-                            <div className="flex-1 py-1 px-3 whitespace-pre overflow-x-auto leading-relaxed">
+                            <div className="flex-1 py-0.5 px-3 whitespace-pre overflow-x-auto leading-5">
                               {row.right ? renderLineContent(row.right.content) : <span>&nbsp;</span>}
                             </div>
                           </div>
@@ -521,7 +530,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
                         {/* Inline Findings Pinned Below Split Row */}
                         {row.findings && row.findings.length > 0 && (
-                          <div className="bg-zinc-50/60 dark:bg-zinc-950/80 border-y border-zinc-200 dark:border-zinc-800 py-1">
+                          <div className="bg-[#f6f8fa] dark:bg-[#0d1117] border-y border-[#e4e4e7] dark:border-[#30363d] py-1">
                             {row.findings.map((finding) => (
                               <InlineFindingCard
                                 key={finding.id}
@@ -541,27 +550,27 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         })}
       </div>
 
-      {/* Accessible Keyboard Shortcuts Help Popover Modal */}
+      {/* Keyboard Shortcuts Help Dialog */}
       {showShortcutsModal && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Keyboard Shortcuts Help"
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setShowShortcutsModal(false)}
         >
           <div
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl max-w-md w-full p-6 text-zinc-900 dark:text-zinc-100"
+            className="bg-white dark:bg-[#161b22] border border-[#e4e4e7] dark:border-[#30363d] rounded-lg shadow-xl max-w-md w-full p-6 text-[#171717] dark:text-[#e6edf3]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e4e4e7] dark:border-[#30363d]">
               <div className="flex items-center gap-2">
-                <Keyboard className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                <Keyboard className="w-4 h-4 text-[#52525b] dark:text-[#8b949e]" />
                 <h3 className="text-sm font-semibold">Keyboard Shortcuts</h3>
               </div>
               <button
                 onClick={() => setShowShortcutsModal(false)}
-                className="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                className="p-1 rounded text-[#71717a] hover:text-[#171717] dark:hover:text-[#e6edf3] transition-colors"
                 aria-label="Close shortcuts modal"
               >
                 <X className="w-4 h-4" />
@@ -569,54 +578,54 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             </div>
 
             <div className="mt-4 space-y-2.5 text-xs">
-              <div className="flex items-center justify-between py-1.5 border-b border-zinc-100 dark:border-zinc-800">
-                <span className="text-zinc-600 dark:text-zinc-300">Next finding</span>
-                <kbd className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-[11px] text-zinc-900 dark:text-zinc-100 font-semibold">
+              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
+                <span className="text-[#52525b] dark:text-[#8b949e]">Jump to next issue</span>
+                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px] font-semibold">
                   j
                 </kbd>
               </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-zinc-100 dark:border-zinc-800">
-                <span className="text-zinc-600 dark:text-zinc-300">Previous finding</span>
-                <kbd className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-[11px] text-zinc-900 dark:text-zinc-100 font-semibold">
+              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
+                <span className="text-[#52525b] dark:text-[#8b949e]">Jump to previous issue</span>
+                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px] font-semibold">
                   k
                 </kbd>
               </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-zinc-100 dark:border-zinc-800">
-                <span className="text-zinc-600 dark:text-zinc-300">Clear active finding focus</span>
-                <kbd className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-[11px] text-zinc-900 dark:text-zinc-100">
+              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
+                <span className="text-[#52525b] dark:text-[#8b949e]">Clear active issue highlight</span>
+                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px]">
                   Esc
                 </kbd>
               </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-zinc-100 dark:border-zinc-800">
-                <span className="text-zinc-600 dark:text-zinc-300">Switch to Unified diff view</span>
-                <kbd className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-[11px] text-zinc-900 dark:text-zinc-100">
+              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
+                <span className="text-[#52525b] dark:text-[#8b949e]">Unified diff view</span>
+                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px]">
                   u
                 </kbd>
               </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-zinc-100 dark:border-zinc-800">
-                <span className="text-zinc-600 dark:text-zinc-300">Switch to Split diff view</span>
-                <kbd className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-[11px] text-zinc-900 dark:text-zinc-100">
+              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
+                <span className="text-[#52525b] dark:text-[#8b949e]">Split side-by-side diff view</span>
+                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px]">
                   s
                 </kbd>
               </div>
 
               <div className="flex items-center justify-between py-1.5">
-                <span className="text-zinc-600 dark:text-zinc-300">Toggle this shortcuts help</span>
-                <kbd className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-[11px] text-zinc-900 dark:text-zinc-100">
+                <span className="text-[#52525b] dark:text-[#8b949e]">Toggle shortcuts help</span>
+                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px]">
                   ?
                 </kbd>
               </div>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[11px] text-zinc-500 dark:text-zinc-400">
-              <span>Shortcuts pause automatically while typing in inputs.</span>
+            <div className="mt-5 pt-3 border-t border-[#e4e4e7] dark:border-[#30363d] flex justify-between items-center text-[11px] text-[#71717a] dark:text-[#8b949e]">
+              <span>Shortcuts pause automatically when typing in inputs.</span>
               <button
                 onClick={() => setShowShortcutsModal(false)}
-                className="px-3 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 font-medium transition-colors text-xs"
+                className="px-3 py-1.5 rounded-md bg-[#171717] hover:bg-[#27272a] text-white dark:bg-[#21262d] dark:hover:bg-[#30363d] dark:text-[#e6edf3] font-medium transition-colors text-xs"
               >
                 Close
               </button>

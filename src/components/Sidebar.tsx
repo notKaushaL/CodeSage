@@ -7,10 +7,11 @@ import {
   SlidersHorizontal, 
   BookOpen, 
   Settings, 
-  Upload, 
+  Plus, 
   PanelLeftClose, 
   PanelLeft, 
-  X
+  X,
+  FileCode2
 } from 'lucide-react';
 import { ReviewReport } from '../engine/types';
 
@@ -39,36 +40,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   onCloseMobile,
 }) => {
-  const navItems: { id: ActiveNavPage; label: string; icon: React.ReactNode; badge?: string | number }[] = [
+  const primaryNavItems: { id: ActiveNavPage; label: string; subtitle: string; icon: React.ReactNode; count?: number }[] = [
+    {
+      id: 'diff',
+      label: 'Code Review',
+      subtitle: 'Inspect files & issues',
+      icon: <FileCode2 className="w-4 h-4 flex-shrink-0" />,
+      count: currentReport ? currentReport.findings.length : undefined,
+    },
     {
       id: 'dashboard',
-      label: 'Dashboard',
+      label: 'Quick Start',
+      subtitle: 'Import PR or sample',
       icon: <LayoutGrid className="w-4 h-4 flex-shrink-0" />,
     },
     {
-      id: 'diff',
-      label: 'Review Workspace',
-      icon: <GitPullRequest className="w-4 h-4 flex-shrink-0" />,
-      badge: currentReport ? currentReport.findings.length : undefined,
-    },
-    {
       id: 'history',
-      label: 'Review History',
+      label: 'Past Reviews',
+      subtitle: 'Saved audit reports',
       icon: <History className="w-4 h-4 flex-shrink-0" />,
     },
+  ];
+
+  const secondaryNavItems: { id: ActiveNavPage; label: string; icon: React.ReactNode }[] = [
     {
       id: 'pipeline',
-      label: 'Pipeline Inspector',
+      label: 'Engine Metrics',
       icon: <SlidersHorizontal className="w-4 h-4 flex-shrink-0" />,
     },
     {
       id: 'architecture',
-      label: 'Architecture',
+      label: 'How It Works',
       icon: <BookOpen className="w-4 h-4 flex-shrink-0" />,
     },
     {
       id: 'settings',
-      label: 'Settings',
+      label: 'Preferences',
       icon: <Settings className="w-4 h-4 flex-shrink-0" />,
     },
   ];
@@ -79,29 +86,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 select-none">
+    <div className="flex flex-col h-full bg-white dark:bg-[#161b22] border-r border-[#e4e4e7] dark:border-[#30363d] select-none transition-colors">
       {/* Brand Header */}
-      <div className="h-14 px-3.5 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 rounded bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-900 flex-shrink-0">
+      <div className="h-14 px-3.5 flex items-center justify-between border-b border-[#e4e4e7] dark:border-[#30363d]">
+        <button
+          onClick={() => handleNavClick('dashboard')}
+          className="flex items-center gap-2.5 min-w-0 text-left focus:outline-none group"
+        >
+          <div className="w-7 h-7 rounded-md bg-[#171717] dark:bg-[#f0f6fc] flex items-center justify-center text-white dark:text-[#0d1117] flex-shrink-0 shadow-2xs">
             <ShieldCheck className="w-4 h-4" />
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 tracking-tight block truncate">
-                CodeSage AI
-              </span>
-              <span className="text-[10px] text-zinc-500 font-mono block">
-                Diff Reviewer
+              <span className="font-semibold text-[13px] text-[#171717] dark:text-[#e6edf3] tracking-tight block truncate">
+                CodeSage
               </span>
             </div>
           )}
-        </div>
+        </button>
 
         {/* Desktop Collapse Toggle */}
         <button
           onClick={onToggleCollapse}
-          className="hidden md:flex p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+          className="hidden md:flex p-1.5 rounded-md hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] text-[#71717a] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] transition-colors"
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
@@ -111,79 +118,135 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Mobile Close Button */}
         <button
           onClick={onCloseMobile}
-          className="md:hidden p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
+          className="md:hidden p-1.5 rounded-md hover:bg-[#f4f4f5] dark:hover:bg-[#2126f2]/10 text-[#52525b] dark:text-[#8b949e]"
           aria-label="Close sidebar"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Primary Action: New Review */}
-      <div className="p-2.5">
+      {/* Primary Quick Actions */}
+      <div className="p-3 space-y-2 border-b border-[#e4e4e7] dark:border-[#30363d]">
         <button
           onClick={() => {
             onOpenUpload();
             onCloseMobile();
           }}
-          className={`w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 text-xs font-medium transition-colors shadow-xs ${
-            isCollapsed ? 'px-1.5' : ''
+          className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-[#171717] hover:bg-[#27272a] text-white dark:bg-[#238636] dark:hover:bg-[#2ea043] dark:text-white text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+            isCollapsed ? 'px-2' : ''
           }`}
-          title="New Review (Upload or paste diff)"
+          title="New Diff Review (Paste or upload .diff)"
         >
-          <Upload className="w-3.5 h-3.5 flex-shrink-0" />
-          {!isCollapsed && <span>New Review</span>}
+          <Plus className="w-3.5 h-3.5 flex-shrink-0" />
+          {!isCollapsed && <span>New Diff Review</span>}
         </button>
-      </div>
 
-      {/* Nav List */}
-      <nav className="flex-1 px-2 py-1 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = activePage === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.id)}
-              className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
-                isActive
-                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
-              } ${isCollapsed ? 'justify-center px-2' : ''}`}
-              title={isCollapsed ? item.label : undefined}
-            >
-              {item.icon}
-              {!isCollapsed && (
-                <span className="flex-1 text-left truncate">{item.label}</span>
-              )}
-              {!isCollapsed && item.badge !== undefined && (
-                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold ${
-                  isActive
-                    ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
-                }`}>
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Quick Public PR Import Button in Sidebar */}
-      <div className="p-2.5 border-t border-zinc-200 dark:border-zinc-800">
         <button
           onClick={() => {
             onOpenGitHubModal();
             onCloseMobile();
           }}
-          className={`w-full flex items-center gap-2 py-1.5 px-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs transition-colors ${
-            isCollapsed ? 'justify-center px-1.5' : ''
+          className={`w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-md border border-[#d4d4d8] dark:border-[#30363d] bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#171717] dark:text-[#e6edf3] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+            isCollapsed ? 'px-2' : ''
           }`}
           title="Import Public GitHub Pull Request"
         >
-          <GitPullRequest className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />
-          {!isCollapsed && <span className="truncate">Import GitHub PR</span>}
+          <GitPullRequest className="w-3.5 h-3.5 text-[#52525b] dark:text-[#8b949e] flex-shrink-0" />
+          {!isCollapsed && <span>Import GitHub PR</span>}
         </button>
       </div>
+
+      {/* Primary Workspace Navigation */}
+      <div className="flex-1 px-2.5 py-3 space-y-5 overflow-y-auto">
+        <div>
+          {!isCollapsed && (
+            <div className="px-2.5 pb-1.5 text-[11px] font-medium text-[#71717a] dark:text-[#8b949e]">
+              Workspace
+            </div>
+          )}
+          <nav className="space-y-1" aria-label="Primary Workspace Navigation">
+            {primaryNavItems.map((item) => {
+              const isActive = activePage === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'bg-[#f4f4f5] dark:bg-[#21262d] text-[#171717] dark:text-[#e6edf3] font-semibold'
+                      : 'text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] hover:bg-[#fafafa] dark:hover:bg-[#1f242c]'
+                  } ${isCollapsed ? 'justify-center px-2' : ''}`}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  <span className={isActive ? 'text-[#0969da] dark:text-[#2f81f7]' : ''}>
+                    {item.icon}
+                  </span>
+                  {!isCollapsed && (
+                    <span className="flex-1 text-left truncate">{item.label}</span>
+                  )}
+                  {!isCollapsed && item.count !== undefined && (
+                    <span className="text-[11px] font-mono tabular-nums text-[#71717a] dark:text-[#8b949e]">
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div>
+          {!isCollapsed && (
+            <div className="px-2.5 pb-1.5 text-[11px] font-medium text-[#71717a] dark:text-[#8b949e]">
+              System & Guide
+            </div>
+          )}
+          <nav className="space-y-1" aria-label="System Navigation">
+            {secondaryNavItems.map((item) => {
+              const isActive = activePage === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'bg-[#f4f4f5] dark:bg-[#21262d] text-[#171717] dark:text-[#e6edf3] font-semibold'
+                      : 'text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] hover:bg-[#fafafa] dark:hover:bg-[#1f242c]'
+                  } ${isCollapsed ? 'justify-center px-2' : ''}`}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  <span className={isActive ? 'text-[#0969da] dark:text-[#2f81f7]' : ''}>
+                    {item.icon}
+                  </span>
+                  {!isCollapsed && (
+                    <span className="flex-1 text-left truncate">{item.label}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+
+      {/* Active Review Footer Summary */}
+      {!isCollapsed && currentReport && (
+        <div className="p-3 border-t border-[#e4e4e7] dark:border-[#30363d] bg-[#fafafa] dark:bg-[#0d1117]/60">
+          <div className="text-[11px] text-[#71717a] dark:text-[#8b949e] truncate">
+            Active review
+          </div>
+          <button
+            onClick={() => handleNavClick('diff')}
+            className="mt-0.5 text-xs font-medium text-[#171717] dark:text-[#e6edf3] hover:text-[#0969da] dark:hover:text-[#2f81f7] truncate block w-full text-left transition-colors"
+          >
+            {currentReport.diff_title || 'Git Diff Review'}
+          </button>
+          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#71717a] dark:text-[#8b949e] font-mono tabular-nums">
+            <span>Score {currentReport.summary.overall_risk_score}/100</span>
+            <span>·</span>
+            <span>{currentReport.summary.total_files_analyzed} files</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -191,8 +254,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Desktop Persistent Sidebar */}
       <aside
-        className={`hidden md:block flex-shrink-0 transition-all duration-200 ease-in-out z-20 ${
-          isCollapsed ? 'w-14' : 'w-56'
+        className={`hidden md:block flex-shrink-0 transition-all duration-150 ease-out z-20 ${
+          isCollapsed ? 'w-14' : 'w-60'
         }`}
       >
         <div className="sticky top-0 h-screen">
@@ -210,7 +273,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Mobile Drawer Panel */}
       <div
-        className={`fixed inset-y-0 left-0 w-64 z-50 md:hidden transform transition-transform duration-200 ease-in-out ${
+        className={`fixed inset-y-0 left-0 w-64 z-50 md:hidden transform transition-transform duration-150 ease-out ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

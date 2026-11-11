@@ -2,35 +2,39 @@ import React, { useState } from 'react';
 import { 
   AlertTriangle, 
   ShieldAlert, 
-  CheckCircle, 
-  Info, 
+  CheckCircle2, 
   Layers, 
-  FileCode, 
   ExternalLink, 
   GitBranch,
   GitPullRequest,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Plus,
+  FolderGit2
 } from 'lucide-react';
 import { ReviewSummary } from '../engine/types';
 import { GitHubPrMetadata } from '../engine/githubTypes';
 
 interface RiskMeterProps {
+  diffTitle?: string;
   summary: ReviewSummary;
   githubPr?: GitHubPrMetadata;
   selectedCategory: string | null;
   onSelectCategory: (category: string | null) => void;
   selectedSeverity: string | null;
   onSelectSeverity: (severity: string | null) => void;
+  onOpenUpload?: () => void;
+  onOpenGitHubModal?: () => void;
 }
 
 export const RiskMeter: React.FC<RiskMeterProps> = ({
+  diffTitle,
   summary,
   githubPr,
-  selectedCategory,
-  onSelectCategory,
   selectedSeverity,
   onSelectSeverity,
+  onOpenUpload,
+  onOpenGitHubModal,
 }) => {
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
 
@@ -48,40 +52,35 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
     top_recommendations,
   } = summary;
 
-  // Status visual configurations with neutral developer styling
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'CRITICAL_RISK':
         return {
-          label: 'CRITICAL RISK',
-          sub: 'Merge Blocked — Severe vulnerabilities identified',
-          badgeClass: 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800',
-          scoreColor: 'text-red-600 dark:text-red-400',
-          icon: <ShieldAlert className="w-4 h-4 text-red-600 dark:text-red-400" />
+          label: 'Action Required — Critical Issues',
+          sub: 'Security vulnerabilities or high-risk defects detected before merge',
+          scoreColor: 'text-[#cf222e] dark:text-[#f85149]',
+          icon: <ShieldAlert className="w-4 h-4 text-[#cf222e] dark:text-[#f85149] flex-shrink-0" />
         };
       case 'HIGH_RISK':
         return {
-          label: 'HIGH RISK',
-          sub: 'Major defects found — Resolution strongly recommended',
-          badgeClass: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800',
-          scoreColor: 'text-amber-600 dark:text-amber-400',
-          icon: <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          label: 'Review Recommended — High Risk',
+          sub: 'Important security or logic issues need attention',
+          scoreColor: 'text-[#d97706] dark:text-[#d29922]',
+          icon: <AlertTriangle className="w-4 h-4 text-[#d97706] dark:text-[#d29922] flex-shrink-0" />
         };
       case 'MODERATE_RISK':
         return {
-          label: 'MODERATE RISK',
-          sub: 'Code quality and non-blocking issues detected',
-          badgeClass: 'bg-yellow-100 dark:bg-yellow-950/60 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-800',
-          scoreColor: 'text-yellow-600 dark:text-yellow-400',
-          icon: <Layers className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+          label: 'Moderate Risk — Minor Issues',
+          sub: 'Code quality and non-blocking suggestions identified',
+          scoreColor: 'text-[#ca8a04] dark:text-[#e3b341]',
+          icon: <Layers className="w-4 h-4 text-[#ca8a04] dark:text-[#e3b341] flex-shrink-0" />
         };
       default:
         return {
-          label: 'CLEAN PASS',
-          sub: 'No critical defects or secrets detected',
-          badgeClass: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
-          scoreColor: 'text-emerald-600 dark:text-emerald-400',
-          icon: <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          label: 'Ready to Merge — Clean Pass',
+          sub: 'No security vulnerabilities or blocking defects detected',
+          scoreColor: 'text-[#1a7f37] dark:text-[#3fb950]',
+          icon: <CheckCircle2 className="w-4 h-4 text-[#1a7f37] dark:text-[#3fb950] flex-shrink-0" />
         };
     }
   };
@@ -90,162 +89,193 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
   const totalFindings = critical_count + high_count + medium_count + low_count + info_count;
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 shadow-sm space-y-3">
-      {/* GitHub PR Metadata Strip (when reviewing PR) */}
-      {githubPr && (
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-zinc-200 dark:border-zinc-800 text-xs">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 font-mono text-[11px] font-semibold">
-              <GitPullRequest className="w-3.5 h-3.5 text-zinc-500" />
-              <span>{githubPr.owner}/{githubPr.repo}#{githubPr.pullNumber}</span>
-            </span>
-            <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate max-w-lg">
-              {githubPr.title}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 font-mono text-[11px]">
-            <div className="flex items-center gap-1">
-              <GitBranch className="w-3 h-3 text-zinc-400" />
-              <span>{githubPr.base.ref}</span>
-              <span>←</span>
-              <span className="text-zinc-800 dark:text-zinc-200 font-medium">{githubPr.head.ref}</span>
+    <section className="bg-white dark:bg-[#161b22] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] p-4 sm:p-5 transition-colors space-y-4">
+      {/* Top Row: Review Title / GitHub PR Context + Quick Switch Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
+        <div className="min-w-0 flex-1">
+          {githubPr ? (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <GitPullRequest className="w-4 h-4 text-[#0969da] dark:text-[#2f81f7] flex-shrink-0" />
+              <span className="font-mono font-semibold text-[#171717] dark:text-[#e6edf3]">
+                {githubPr.owner}/{githubPr.repo} #{githubPr.pullNumber}
+              </span>
+              <span className="text-[#d4d4d8] dark:text-[#30363d]">·</span>
+              <span className="font-medium text-[#171717] dark:text-[#e6edf3] truncate max-w-md">
+                {githubPr.title}
+              </span>
+              <span className="text-[#d4d4d8] dark:text-[#30363d] hidden sm:inline">·</span>
+              <span className="hidden sm:inline-flex items-center gap-1 font-mono text-[11px] text-[#71717a] dark:text-[#8b949e]">
+                <GitBranch className="w-3 h-3" />
+                <span>{githubPr.base.ref} ← {githubPr.head.ref}</span>
+              </span>
+              <a
+                href={githubPr.htmlUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[#0969da] dark:text-[#2f81f7] hover:underline ml-1"
+              >
+                <span>View on GitHub</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
-            <a
-              href={githubPr.htmlUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-sans"
-            >
-              <span>GitHub</span>
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-          </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-sm sm:text-base font-semibold text-[#171717] dark:text-[#e6edf3] truncate">
+                {diffTitle || 'Active Code Review'}
+              </h1>
+              <span className="text-[#d4d4d8] dark:text-[#30363d]">·</span>
+              <span className="text-xs text-[#71717a] dark:text-[#8b949e] font-mono tabular-nums">
+                {total_files_analyzed} {total_files_analyzed === 1 ? 'file' : 'files'} changed · {total_lines_analyzed} lines analyzed
+              </span>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Main Review Summary Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Risk Score & Status */}
+        {/* Quick Switch Review Source Buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {onOpenGitHubModal && (
+            <button
+              onClick={onOpenGitHubModal}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#52525b] dark:text-[#e6edf3] border border-[#d4d4d8] dark:border-[#30363d] transition-colors whitespace-nowrap shrink-0"
+            >
+              <GitPullRequest className="w-3.5 h-3.5 text-[#71717a] dark:text-[#8b949e]" />
+              <span>Import PR</span>
+            </button>
+          )}
+          {onOpenUpload && (
+            <button
+              onClick={onOpenUpload}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#52525b] dark:text-[#e6edf3] border border-[#d4d4d8] dark:border-[#30363d] transition-colors whitespace-nowrap shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 text-[#71717a] dark:text-[#8b949e]" />
+              <span>Paste / Upload Diff</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main Row: Score + Status + Interactive Issue Filters */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Left: Score & Verdict */}
         <div className="flex items-center gap-4">
-          <div className="flex items-baseline gap-1.5 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Score
-            </span>
+          <div className="flex items-baseline gap-1 px-3.5 py-2 rounded-md bg-[#fafafa] dark:bg-[#0d1117] border border-[#e4e4e7] dark:border-[#30363d]">
             <span className={`text-2xl font-bold font-mono tabular-nums leading-none ${statusConfig.scoreColor}`}>
               {overall_risk_score}
             </span>
-            <span className="text-xs text-zinc-400 font-mono">/100</span>
+            <span className="text-xs text-[#71717a] dark:text-[#8b949e] font-mono tabular-nums">/100</span>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded border ${statusConfig.badgeClass}`}>
-                {statusConfig.icon}
-                <span>{statusConfig.label}</span>
-              </span>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                {total_files_analyzed} {total_files_analyzed === 1 ? 'file' : 'files'} · {total_lines_analyzed} lines
+              {statusConfig.icon}
+              <span className="text-sm font-semibold text-[#171717] dark:text-[#e6edf3]">
+                {statusConfig.label}
               </span>
             </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+            <p className="text-xs text-[#52525b] dark:text-[#8b949e] mt-0.5">
               {statusConfig.sub}
             </p>
           </div>
         </div>
 
-        {/* Severity Filter Controls */}
-        <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400 mr-1 hidden sm:inline">Filters:</span>
-          
-          <button
-            onClick={() => onSelectSeverity(null)}
-            className={`px-2.5 py-1 text-xs font-mono rounded border transition-colors ${
-              selectedSeverity === null
-                ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-800 dark:border-zinc-100 font-semibold'
-                : 'bg-zinc-50 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-200'
-            }`}
-          >
-            All ({totalFindings})
-          </button>
+        {/* Right: Segmented Filter Controls & Summary Toggle */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex items-center p-1 rounded-lg bg-[#f4f4f5] dark:bg-[#0d1117] border border-[#e4e4e7] dark:border-[#30363d] gap-0.5 flex-wrap">
+            <button
+              onClick={() => onSelectSeverity(null)}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                selectedSeverity === null
+                  ? 'bg-white dark:bg-[#21262d] text-[#171717] dark:text-[#e6edf3] shadow-2xs font-semibold'
+                  : 'text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3]'
+              }`}
+            >
+              All Issues ({totalFindings})
+            </button>
 
-          <button
-            onClick={() => onSelectSeverity(selectedSeverity === 'CRITICAL' ? null : 'CRITICAL')}
-            className={`px-2 py-1 text-xs font-mono rounded border transition-colors ${
-              selectedSeverity === 'CRITICAL'
-                ? 'bg-red-600 text-white border-red-600 font-semibold'
-                : critical_count > 0
-                ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900/60 hover:border-red-400'
-                : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 border-zinc-200 dark:border-zinc-800 opacity-60'
-            }`}
-          >
-            Crit: {critical_count}
-          </button>
+            <button
+              onClick={() => onSelectSeverity(selectedSeverity === 'CRITICAL' ? null : 'CRITICAL')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                selectedSeverity === 'CRITICAL'
+                  ? 'bg-[#cf222e] text-white font-semibold'
+                  : critical_count > 0
+                  ? 'text-[#cf222e] dark:text-[#f85149] hover:bg-white/60 dark:hover:bg-[#161b22]'
+                  : 'text-[#a1a1aa] dark:text-[#484f58]'
+              }`}
+            >
+              Critical ({critical_count})
+            </button>
 
-          <button
-            onClick={() => onSelectSeverity(selectedSeverity === 'HIGH' ? null : 'HIGH')}
-            className={`px-2 py-1 text-xs font-mono rounded border transition-colors ${
-              selectedSeverity === 'HIGH'
-                ? 'bg-amber-600 text-white border-amber-600 font-semibold'
-                : high_count > 0
-                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/60 hover:border-amber-400'
-                : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 border-zinc-200 dark:border-zinc-800 opacity-60'
-            }`}
-          >
-            High: {high_count}
-          </button>
+            <button
+              onClick={() => onSelectSeverity(selectedSeverity === 'HIGH' ? null : 'HIGH')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                selectedSeverity === 'HIGH'
+                  ? 'bg-[#d97706] text-white font-semibold'
+                  : high_count > 0
+                  ? 'text-[#d97706] dark:text-[#d29922] hover:bg-white/60 dark:hover:bg-[#161b22]'
+                  : 'text-[#a1a1aa] dark:text-[#484f58]'
+              }`}
+            >
+              High ({high_count})
+            </button>
 
-          <button
-            onClick={() => onSelectSeverity(selectedSeverity === 'MEDIUM' ? null : 'MEDIUM')}
-            className={`px-2 py-1 text-xs font-mono rounded border transition-colors ${
-              selectedSeverity === 'MEDIUM'
-                ? 'bg-yellow-600 text-white border-yellow-600 font-semibold'
-                : medium_count > 0
-                ? 'bg-yellow-50 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-900/60 hover:border-yellow-400'
-                : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 border-zinc-200 dark:border-zinc-800 opacity-60'
-            }`}
-          >
-            Med: {medium_count}
-          </button>
+            <button
+              onClick={() => onSelectSeverity(selectedSeverity === 'MEDIUM' ? null : 'MEDIUM')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                selectedSeverity === 'MEDIUM'
+                  ? 'bg-[#ca8a04] text-white font-semibold'
+                  : medium_count > 0
+                  ? 'text-[#a16207] dark:text-[#e3b341] hover:bg-white/60 dark:hover:bg-[#161b22]'
+                  : 'text-[#a1a1aa] dark:text-[#484f58]'
+              }`}
+            >
+              Medium ({medium_count})
+            </button>
 
-          <button
-            onClick={() => onSelectSeverity(selectedSeverity === 'LOW' ? null : 'LOW')}
-            className={`px-2 py-1 text-xs font-mono rounded border transition-colors ${
-              selectedSeverity === 'LOW'
-                ? 'bg-sky-600 text-white border-sky-600 font-semibold'
-                : low_count > 0
-                ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200 dark:border-sky-900/60 hover:border-sky-400'
-                : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 border-zinc-200 dark:border-zinc-800 opacity-60'
-            }`}
-          >
-            Low: {low_count}
-          </button>
+            <button
+              onClick={() => onSelectSeverity(selectedSeverity === 'LOW' ? null : 'LOW')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                selectedSeverity === 'LOW'
+                  ? 'bg-[#0969da] text-white font-semibold'
+                  : low_count > 0
+                  ? 'text-[#0969da] dark:text-[#58a6ff] hover:bg-white/60 dark:hover:bg-[#161b22]'
+                  : 'text-[#a1a1aa] dark:text-[#484f58]'
+              }`}
+            >
+              Low ({low_count})
+            </button>
+          </div>
 
           <button
             onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
-            className="ml-2 p-1.5 rounded border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs flex items-center gap-1 transition-colors"
-            title={isSummaryExpanded ? 'Collapse Executive Summary' : 'Expand Executive Summary'}
+            className="px-3 py-1.5 rounded-md border border-[#d4d4d8] dark:border-[#30363d] bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#171717] dark:text-[#e6edf3] text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
+            title={isSummaryExpanded ? 'Hide Overview & Advice' : 'Show Overview & Advice'}
           >
-            <span>Summary</span>
+            <span>Overview</span>
             {isSummaryExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
 
-      {/* Collapsible Executive Summary & Recommendations Accordion */}
+      {/* Expandable Executive Summary & Actionable Recommendations */}
       {isSummaryExpanded && (
-        <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 space-y-2.5 text-xs">
+        <div className="pt-3.5 border-t border-[#e4e4e7] dark:border-[#30363d] grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           {executive_summary && (
-            <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans">
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100 block mb-1">Executive Summary</span>
-              {executive_summary}
+            <div className="space-y-1">
+              <span className="font-semibold text-[#171717] dark:text-[#e6edf3] block">
+                Review Summary
+              </span>
+              <p className="text-[#52525b] dark:text-[#8b949e] leading-relaxed">
+                {executive_summary}
+              </p>
             </div>
           )}
 
           {top_recommendations && top_recommendations.length > 0 && (
-            <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded border border-zinc-200 dark:border-zinc-800 space-y-1.5">
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">Top Recommendations</span>
-              <ol className="list-decimal list-inside space-y-1 text-zinc-700 dark:text-zinc-300 font-sans">
+            <div className="space-y-1">
+              <span className="font-semibold text-[#171717] dark:text-[#e6edf3] block">
+                Recommended Actions
+              </span>
+              <ol className="list-decimal list-inside space-y-1 text-[#52525b] dark:text-[#8b949e] leading-relaxed">
                 {top_recommendations.map((rec, rIdx) => (
                   <li key={rIdx}>{rec}</li>
                 ))}
@@ -254,6 +284,6 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 };

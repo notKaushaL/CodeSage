@@ -106,14 +106,15 @@ export function resolveLanguageId(languageName?: string, filePath?: string): Sup
   return null;
 }
 
-// Global singleton highlighter instance promise
+// Global singleton highlighter instance promise supporting both GitHub Dark & GitHub Light
 let highlighterPromise: Promise<Highlighter> | null = null;
-const THEME = 'github-dark-default';
+const THEME_DARK = 'github-dark-default';
+const THEME_LIGHT = 'github-light-default';
 
 export function getHighlighter(): Promise<Highlighter> {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
-      themes: [THEME],
+      themes: [THEME_DARK, THEME_LIGHT],
       langs: [...SUPPORTED_LANGUAGES],
     }).catch((err) => {
       console.warn('Failed to initialize Shiki highlighter:', err);
@@ -124,35 +125,42 @@ export function getHighlighter(): Promise<Highlighter> {
   return highlighterPromise;
 }
 
-// In-memory cache for highlighted line tokens to prevent redundant parsing
+// In-memory cache for highlighted line tokens keyed by themeMode:langId:lineContent
 const lineTokenCache = new Map<string, HighlightedToken[]>();
-const MAX_CACHE_SIZE = 5000;
+const MAX_CACHE_SIZE = 8000;
 
 /**
- * Tokenizes a single code line synchronously if cached, or returns plain tokens.
+ * Tokenizes a single code line synchronously if cached, or returns null.
  */
-export function getCachedLineTokens(lineContent: string, langId: string | null): HighlightedToken[] | null {
+export function getCachedLineTokens(
+  lineContent: string,
+  langId: string | null,
+  themeMode: 'dark' | 'light' = 'dark'
+): HighlightedToken[] | null {
   if (!langId) return null;
-  const cacheKey = `${langId}:${lineContent}`;
+  const cacheKey = `${themeMode}:${langId}:${lineContent}`;
   return lineTokenCache.get(cacheKey) || null;
 }
 
 /**
- * Tokenizes an array of code lines using Shiki, with in-memory caching.
+ * Tokenizes an array of code lines using Shiki, with in-memory caching for both dark and light modes.
  * Falls back gracefully to plain uncolored tokens on any error or unsupported language.
  */
 export async function highlightLines(
   lines: string[],
-  langId: SupportedLang | null
+  langId: SupportedLang | null,
+  themeMode: 'dark' | 'light' = 'dark'
 ): Promise<HighlightedToken[][]> {
+  const fallbackColor = themeMode === 'light' ? '#1f2328' : '#e6edf3';
+
   if (!langId || lines.length === 0) {
-    return lines.map((line) => [{ content: line, color: '#e4e4e7' }]);
+    return lines.map((line) => [{ content: line, color: fallbackColor }]);
   }
 
-  // Check if all lines are already cached
+  // Check if all lines are already cached for this themeMode
   const uncachedIndices: number[] = [];
   const result: (HighlightedToken[] | null)[] = lines.map((line, idx) => {
-    const cached = lineTokenCache.get(`${langId}:${line}`);
+    const cached = lineTokenCache.get(`${themeMode}:${langId}:${line}`);
     if (cached) return cached;
     uncachedIndices.push(idx);
     return null;
@@ -165,9 +173,10 @@ export async function highlightLines(
   try {
     const highlighter = await getHighlighter();
     const fullCode = lines.join('\n');
+    const shikiTheme = themeMode === 'light' ? THEME_LIGHT : THEME_DARK;
     const { tokens } = highlighter.codeToTokens(fullCode, {
       lang: langId,
-      theme: THEME,
+      theme: shikiTheme,
     });
 
     return tokens.map((lineTokens: ThemedToken[], idx: number) => {
@@ -180,13 +189,13 @@ export async function highlightLines(
       // Cache tokenized line
       const originalLine = lines[idx];
       if (originalLine !== undefined && lineTokenCache.size < MAX_CACHE_SIZE) {
-        lineTokenCache.set(`${langId}:${originalLine}`, converted);
+        lineTokenCache.set(`${themeMode}:${langId}:${originalLine}`, converted);
       }
 
       return converted;
     });
   } catch (err) {
     // Graceful fallback to unstyled text
-    return lines.map((line) => [{ content: line, color: '#e4e4e7' }]);
+    return lines.map((line) => [{ content: line, color: fallbackColor }]);
   }
 }

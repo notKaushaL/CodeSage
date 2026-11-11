@@ -2,10 +2,9 @@ import React, { useState, useRef } from 'react';
 import { 
   X, 
   Upload, 
-  FileText, 
   AlertCircle, 
-  Sparkles, 
-  FileCode
+  FolderGit2,
+  GitPullRequest
 } from 'lucide-react';
 import { SAMPLE_DIFFS, SampleDiff } from '../samples/diffSamples';
 
@@ -13,6 +12,7 @@ interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitDiff: (diffText: string, title?: string) => Promise<void>;
+  onSwitchToGitHub?: () => void;
   isLoading: boolean;
 }
 
@@ -20,6 +20,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   isOpen,
   onClose,
   onSubmitDiff,
+  onSwitchToGitHub,
   isLoading,
 }) => {
   const [diffText, setDiffText] = useState('');
@@ -59,7 +60,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!diffText.trim()) {
-      setError('Please provide a unified git diff or patch.');
+      setError('Please paste a unified git diff or upload a .diff / .patch file.');
       return;
     }
 
@@ -79,30 +80,54 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Submit Git Diff for Review"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl bg-white dark:bg-[#161b22] border border-[#e4e4e7] dark:border-[#30363d] rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950">
+        <div className="px-5 py-3.5 border-b border-[#e4e4e7] dark:border-[#30363d] flex items-center justify-between bg-[#fafafa] dark:bg-[#0d1117]">
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Submit Git Diff for Review</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Deterministic security rules + Gemini 3.8 Flash hybrid analysis
+            <h3 className="text-sm font-semibold text-[#171717] dark:text-[#e6edf3]">New Code Review</h3>
+            <p className="text-xs text-[#52525b] dark:text-[#8b949e]">
+              Paste a Git diff, upload a .diff/.patch file, or load a sample scenario
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
-            aria-label="Close dialog"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {onSwitchToGitHub && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onSwitchToGitHub();
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white dark:bg-[#21262d] hover:bg-[#f4f4f5] dark:hover:bg-[#30363d] text-[#171717] dark:text-[#e6edf3] border border-[#d4d4d8] dark:border-[#30363d] transition-colors"
+              >
+                <GitPullRequest className="w-3.5 h-3.5 text-[#0969da] dark:text-[#58a6ff]" />
+                <span>Import GitHub PR Instead</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md text-[#71717a] hover:text-[#171717] dark:hover:text-[#e6edf3] transition-colors"
+              aria-label="Close dialog"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1">
-          {/* Quick Pre-Baked Samples */}
+          {/* Quick Pre-Built Samples */}
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
-              Or load a curated test fixture:
+            <label className="block text-xs font-medium text-[#52525b] dark:text-[#8b949e] mb-1.5">
+              Load a pre-built sample diff:
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {SAMPLE_DIFFS.map((sample) => (
@@ -110,13 +135,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   type="button"
                   key={sample.id}
                   onClick={() => handleSelectSample(sample)}
-                  className="p-2.5 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 text-left transition-colors"
+                  className="p-2.5 rounded-md border border-[#e4e4e7] dark:border-[#30363d] bg-[#fafafa] dark:bg-[#0d1117] hover:border-[#0969da] dark:hover:border-[#2f81f7] text-left transition-colors"
                 >
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                    <Sparkles className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-[#171717] dark:text-[#e6edf3] truncate">
+                    <FolderGit2 className="w-3.5 h-3.5 text-[#0969da] dark:text-[#58a6ff] flex-shrink-0" />
                     <span className="truncate">{sample.title}</span>
                   </div>
-                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 block truncate mt-0.5">
+                  <span className="text-[11px] text-[#71717a] dark:text-[#8b949e] block truncate mt-0.5 font-mono">
                     {sample.badge}
                   </span>
                 </button>
@@ -126,28 +151,28 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
           {/* Diff Title */}
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Review Title / Branch Name (Optional)
+            <label className="block text-xs font-medium text-[#171717] dark:text-[#e6edf3] mb-1">
+              Review Title (Optional)
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. PR #1042: Add user authentication and query refactor"
-              className="w-full px-3 py-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full px-3 py-1.5 rounded-md bg-[#fafafa] dark:bg-[#0d1117] border border-[#d4d4d8] dark:border-[#30363d] text-xs text-[#171717] dark:text-[#e6edf3] placeholder-[#71717a] dark:placeholder-[#6e7681] focus:outline-none focus:border-[#0969da] dark:focus:border-[#2f81f7] font-mono"
             />
           </div>
 
           {/* Paste Raw Diff */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="block text-xs font-medium text-[#171717] dark:text-[#e6edf3]">
                 Unified Diff Content
               </label>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium"
+                className="text-xs text-[#0969da] dark:text-[#58a6ff] hover:underline flex items-center gap-1 font-medium"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>Upload .diff / .patch file</span>
@@ -161,39 +186,39 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               />
             </div>
             <textarea
-              rows={10}
+              rows={9}
               value={diffText}
               onChange={(e) => setDiffText(e.target.value)}
               placeholder={`diff --git a/src/index.ts b/src/index.ts\n--- a/src/index.ts\n+++ b/src/index.ts\n@@ -1,3 +1,5 @@\n+ const apiKey = "AKIA...";\n`}
-              className="w-full p-3 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 font-mono focus:outline-none focus:border-blue-500 leading-relaxed"
+              className="w-full p-3 rounded-md bg-[#fafafa] dark:bg-[#0d1117] border border-[#d4d4d8] dark:border-[#30363d] text-xs text-[#171717] dark:text-[#e6edf3] placeholder-[#71717a] dark:placeholder-[#6e7681] font-mono focus:outline-none focus:border-[#0969da] dark:focus:border-[#2f81f7] leading-relaxed"
             />
-            <div className="flex items-center justify-between mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center justify-between mt-1 text-[11px] text-[#71717a] dark:text-[#8b949e]">
               <span>Standard Git unified diff format</span>
-              <span>Max payload: 2MB</span>
+              <span>Max size: 2 MB</span>
             </div>
           </div>
 
           {error && (
-            <div className="p-3 rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+            <div className="p-3 rounded-md bg-[#ffebe9] dark:bg-[#f85149]/15 border border-[#cf222e]/30 dark:border-[#f85149]/40 text-[#cf222e] dark:text-[#f85149] text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#e4e4e7] dark:border-[#30363d]">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-3.5 py-1.5 rounded text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="px-3.5 py-1.5 rounded-md text-xs font-medium text-[#52525b] dark:text-[#8b949e] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading || !diffText.trim()}
-              className="px-4 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-1.5 rounded-md bg-[#171717] hover:bg-[#27272a] text-white dark:bg-[#238636] dark:hover:bg-[#2ea043] dark:text-white text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {isLoading ? (
                 <>
