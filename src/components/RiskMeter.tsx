@@ -9,8 +9,7 @@ import {
   GitPullRequest,
   ChevronDown,
   ChevronUp,
-  Plus,
-  FolderGit2
+  Plus
 } from 'lucide-react';
 import { ReviewSummary } from '../engine/types';
 import { GitHubPrMetadata } from '../engine/githubTypes';
@@ -56,31 +55,27 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
     switch (status) {
       case 'CRITICAL_RISK':
         return {
-          label: 'Action Required — Critical Issues',
-          sub: 'Security vulnerabilities or high-risk defects detected before merge',
+          label: 'Changes requested · Critical issues',
           scoreColor: 'text-[#cf222e] dark:text-[#f85149]',
-          icon: <ShieldAlert className="w-4 h-4 text-[#cf222e] dark:text-[#f85149] flex-shrink-0" />
+          icon: <ShieldAlert className="w-3.5 h-3.5 text-[#cf222e] dark:text-[#f85149] flex-shrink-0" />,
         };
       case 'HIGH_RISK':
         return {
-          label: 'Review Recommended — High Risk',
-          sub: 'Important security or logic issues need attention',
-          scoreColor: 'text-[#d97706] dark:text-[#d29922]',
-          icon: <AlertTriangle className="w-4 h-4 text-[#d97706] dark:text-[#d29922] flex-shrink-0" />
+          label: 'Review recommended · High risk',
+          scoreColor: 'text-[#9a6700] dark:text-[#d29922]',
+          icon: <AlertTriangle className="w-3.5 h-3.5 text-[#9a6700] dark:text-[#d29922] flex-shrink-0" />,
         };
       case 'MODERATE_RISK':
         return {
-          label: 'Moderate Risk — Minor Issues',
-          sub: 'Code quality and non-blocking suggestions identified',
-          scoreColor: 'text-[#ca8a04] dark:text-[#e3b341]',
-          icon: <Layers className="w-4 h-4 text-[#ca8a04] dark:text-[#e3b341] flex-shrink-0" />
+          label: 'Moderate risk · Minor issues',
+          scoreColor: 'text-[#9a6700] dark:text-[#e3b341]',
+          icon: <Layers className="w-3.5 h-3.5 text-[#9a6700] dark:text-[#e3b341] flex-shrink-0" />,
         };
       default:
         return {
-          label: 'Ready to Merge — Clean Pass',
-          sub: 'No security vulnerabilities or blocking defects detected',
+          label: 'Approved · Clean pass',
           scoreColor: 'text-[#1a7f37] dark:text-[#3fb950]',
-          icon: <CheckCircle2 className="w-4 h-4 text-[#1a7f37] dark:text-[#3fb950] flex-shrink-0" />
+          icon: <CheckCircle2 className="w-3.5 h-3.5 text-[#1a7f37] dark:text-[#3fb950] flex-shrink-0" />,
         };
     }
   };
@@ -89,22 +84,23 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
   const totalFindings = critical_count + high_count + medium_count + low_count + info_count;
 
   return (
-    <section className="bg-white dark:bg-[#161b22] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] p-4 sm:p-5 transition-colors space-y-4">
-      {/* Top Row: Review Title / GitHub PR Context + Quick Switch Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
-        <div className="min-w-0 flex-1">
+    <section className="bg-white dark:bg-[#161b22] rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] px-3.5 py-2.5 transition-colors space-y-2">
+      {/* Compact GitHub PR Header & Filter Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Left: PR Title, Stats & Score */}
+        <div className="flex flex-wrap items-center gap-2 min-w-0 text-xs">
+          <GitPullRequest className="w-4 h-4 text-[#1a7f37] dark:text-[#3fb950] flex-shrink-0" />
           {githubPr ? (
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <GitPullRequest className="w-4 h-4 text-[#0969da] dark:text-[#2f81f7] flex-shrink-0" />
-              <span className="font-mono font-semibold text-[#171717] dark:text-[#e6edf3]">
+            <>
+              <span className="font-mono font-semibold text-[#1f2328] dark:text-[#e6edf3]">
                 {githubPr.owner}/{githubPr.repo} #{githubPr.pullNumber}
               </span>
-              <span className="text-[#d4d4d8] dark:text-[#30363d]">·</span>
-              <span className="font-medium text-[#171717] dark:text-[#e6edf3] truncate max-w-md">
+              <span className="text-[#d0d7de] dark:text-[#30363d]">·</span>
+              <span className="font-semibold text-[#1f2328] dark:text-[#e6edf3] truncate max-w-sm">
                 {githubPr.title}
               </span>
-              <span className="text-[#d4d4d8] dark:text-[#30363d] hidden sm:inline">·</span>
-              <span className="hidden sm:inline-flex items-center gap-1 font-mono text-[11px] text-[#71717a] dark:text-[#8b949e]">
+              <span className="hidden md:inline text-[#d0d7de] dark:text-[#30363d]">·</span>
+              <span className="hidden md:inline-flex items-center gap-1 font-mono text-[11px] text-[#656d76] dark:text-[#8b949e]">
                 <GitBranch className="w-3 h-3" />
                 <span>{githubPr.base.ref} ← {githubPr.head.ref}</span>
               </span>
@@ -112,94 +108,60 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
                 href={githubPr.htmlUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-[#0969da] dark:text-[#2f81f7] hover:underline ml-1"
+                className="inline-flex items-center gap-1 text-[11px] text-[#0969da] dark:text-[#2f81f7] hover:underline"
               >
-                <span>View on GitHub</span>
-                <ExternalLink className="w-3 h-3" />
+                <span>GitHub</span>
+                <ExternalLink className="w-2.5 h-2.5" />
               </a>
-            </div>
+            </>
           ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-sm sm:text-base font-semibold text-[#171717] dark:text-[#e6edf3] truncate">
+            <>
+              <h1 className="text-xs sm:text-sm font-semibold text-[#1f2328] dark:text-[#e6edf3] truncate">
                 {diffTitle || 'Active Code Review'}
               </h1>
-              <span className="text-[#d4d4d8] dark:text-[#30363d]">·</span>
-              <span className="text-xs text-[#71717a] dark:text-[#8b949e] font-mono tabular-nums">
-                {total_files_analyzed} {total_files_analyzed === 1 ? 'file' : 'files'} changed · {total_lines_analyzed} lines analyzed
+              <span className="text-[#d0d7de] dark:text-[#30363d]">·</span>
+              <span className="text-[11px] text-[#656d76] dark:text-[#8b949e] font-mono tabular-nums">
+                {total_files_analyzed} {total_files_analyzed === 1 ? 'file' : 'files'} changed ({total_lines_analyzed} lines)
               </span>
-            </div>
+            </>
           )}
-        </div>
 
-        {/* Quick Switch Review Source Buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {onOpenGitHubModal && (
-            <button
-              onClick={onOpenGitHubModal}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#52525b] dark:text-[#e6edf3] border border-[#d4d4d8] dark:border-[#30363d] transition-colors whitespace-nowrap shrink-0"
-            >
-              <GitPullRequest className="w-3.5 h-3.5 text-[#71717a] dark:text-[#8b949e]" />
-              <span>Import PR</span>
-            </button>
-          )}
-          {onOpenUpload && (
-            <button
-              onClick={onOpenUpload}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#52525b] dark:text-[#e6edf3] border border-[#d4d4d8] dark:border-[#30363d] transition-colors whitespace-nowrap shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 text-[#71717a] dark:text-[#8b949e]" />
-              <span>Paste / Upload Diff</span>
-            </button>
-          )}
-        </div>
-      </div>
+          <span className="text-[#d0d7de] dark:text-[#30363d]">·</span>
 
-      {/* Main Row: Score + Status + Interactive Issue Filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Left: Score & Verdict */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-baseline gap-1 px-3.5 py-2 rounded-md bg-[#fafafa] dark:bg-[#0d1117] border border-[#e4e4e7] dark:border-[#30363d]">
-            <span className={`text-2xl font-bold font-mono tabular-nums leading-none ${statusConfig.scoreColor}`}>
-              {overall_risk_score}
+          {/* Health Score & Verdict inline */}
+          <div className="inline-flex items-center gap-1.5">
+            {statusConfig.icon}
+            <span className={`font-mono font-bold tabular-nums ${statusConfig.scoreColor}`}>
+              Score {overall_risk_score}/100
             </span>
-            <span className="text-xs text-[#71717a] dark:text-[#8b949e] font-mono tabular-nums">/100</span>
-          </div>
-
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              {statusConfig.icon}
-              <span className="text-sm font-semibold text-[#171717] dark:text-[#e6edf3]">
-                {statusConfig.label}
-              </span>
-            </div>
-            <p className="text-xs text-[#52525b] dark:text-[#8b949e] mt-0.5">
-              {statusConfig.sub}
-            </p>
+            <span className="hidden sm:inline text-[#656d76] dark:text-[#8b949e]">
+              ({statusConfig.label})
+            </span>
           </div>
         </div>
 
-        {/* Right: Segmented Filter Controls & Summary Toggle */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex items-center p-1 rounded-lg bg-[#f4f4f5] dark:bg-[#0d1117] border border-[#e4e4e7] dark:border-[#30363d] gap-0.5 flex-wrap">
+        {/* Right: Segmented Issue Filter Bar & Quick Actions */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="inline-flex items-center p-0.5 rounded-[6px] bg-[#f6f8fa] dark:bg-[#0d1117] border border-[#d0d7de] dark:border-[#30363d] text-[11px]">
             <button
               onClick={() => onSelectSeverity(null)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+              className={`px-2 py-0.5 font-medium rounded-[4px] transition-colors whitespace-nowrap shrink-0 ${
                 selectedSeverity === null
-                  ? 'bg-white dark:bg-[#21262d] text-[#171717] dark:text-[#e6edf3] shadow-2xs font-semibold'
-                  : 'text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3]'
+                  ? 'bg-white dark:bg-[#21262d] text-[#1f2328] dark:text-[#e6edf3] shadow-2xs font-semibold'
+                  : 'text-[#656d76] dark:text-[#8b949e] hover:text-[#1f2328] dark:hover:text-[#e6edf3]'
               }`}
             >
-              All Issues ({totalFindings})
+              All ({totalFindings})
             </button>
 
             <button
               onClick={() => onSelectSeverity(selectedSeverity === 'CRITICAL' ? null : 'CRITICAL')}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+              className={`px-2 py-0.5 font-medium rounded-[4px] transition-colors whitespace-nowrap shrink-0 ${
                 selectedSeverity === 'CRITICAL'
                   ? 'bg-[#cf222e] text-white font-semibold'
                   : critical_count > 0
                   ? 'text-[#cf222e] dark:text-[#f85149] hover:bg-white/60 dark:hover:bg-[#161b22]'
-                  : 'text-[#a1a1aa] dark:text-[#484f58]'
+                  : 'text-[#6e7781] dark:text-[#484f58]'
               }`}
             >
               Critical ({critical_count})
@@ -207,12 +169,12 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
 
             <button
               onClick={() => onSelectSeverity(selectedSeverity === 'HIGH' ? null : 'HIGH')}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+              className={`px-2 py-0.5 font-medium rounded-[4px] transition-colors whitespace-nowrap shrink-0 ${
                 selectedSeverity === 'HIGH'
-                  ? 'bg-[#d97706] text-white font-semibold'
+                  ? 'bg-[#9a6700] dark:bg-[#d29922] text-white dark:text-[#0d1117] font-semibold'
                   : high_count > 0
-                  ? 'text-[#d97706] dark:text-[#d29922] hover:bg-white/60 dark:hover:bg-[#161b22]'
-                  : 'text-[#a1a1aa] dark:text-[#484f58]'
+                  ? 'text-[#9a6700] dark:text-[#d29922] hover:bg-white/60 dark:hover:bg-[#161b22]'
+                  : 'text-[#6e7781] dark:text-[#484f58]'
               }`}
             >
               High ({high_count})
@@ -220,12 +182,12 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
 
             <button
               onClick={() => onSelectSeverity(selectedSeverity === 'MEDIUM' ? null : 'MEDIUM')}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+              className={`px-2 py-0.5 font-medium rounded-[4px] transition-colors whitespace-nowrap shrink-0 ${
                 selectedSeverity === 'MEDIUM'
-                  ? 'bg-[#ca8a04] text-white font-semibold'
+                  ? 'bg-[#9a6700] dark:bg-[#e3b341] text-white dark:text-[#0d1117] font-semibold'
                   : medium_count > 0
-                  ? 'text-[#a16207] dark:text-[#e3b341] hover:bg-white/60 dark:hover:bg-[#161b22]'
-                  : 'text-[#a1a1aa] dark:text-[#484f58]'
+                  ? 'text-[#9a6700] dark:text-[#e3b341] hover:bg-white/60 dark:hover:bg-[#161b22]'
+                  : 'text-[#6e7781] dark:text-[#484f58]'
               }`}
             >
               Medium ({medium_count})
@@ -233,12 +195,12 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
 
             <button
               onClick={() => onSelectSeverity(selectedSeverity === 'LOW' ? null : 'LOW')}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+              className={`px-2 py-0.5 font-medium rounded-[4px] transition-colors whitespace-nowrap shrink-0 ${
                 selectedSeverity === 'LOW'
                   ? 'bg-[#0969da] text-white font-semibold'
                   : low_count > 0
                   ? 'text-[#0969da] dark:text-[#58a6ff] hover:bg-white/60 dark:hover:bg-[#161b22]'
-                  : 'text-[#a1a1aa] dark:text-[#484f58]'
+                  : 'text-[#6e7781] dark:text-[#484f58]'
               }`}
             >
               Low ({low_count})
@@ -247,24 +209,44 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
 
           <button
             onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
-            className="px-3 py-1.5 rounded-md border border-[#d4d4d8] dark:border-[#30363d] bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#171717] dark:text-[#e6edf3] text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
+            className="h-6 px-2 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] bg-[#f6f8fa] hover:bg-[#f3f4f6] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#1f2328] dark:text-[#e6edf3] text-[11px] font-medium inline-flex items-center gap-1 transition-colors whitespace-nowrap shrink-0"
             title={isSummaryExpanded ? 'Hide Overview & Advice' : 'Show Overview & Advice'}
           >
-            <span>Overview</span>
-            {isSummaryExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            <span>Summary</span>
+            {isSummaryExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
+
+          {onOpenGitHubModal && (
+            <button
+              onClick={onOpenGitHubModal}
+              className="hidden sm:inline-flex items-center gap-1 h-6 px-2 rounded-[6px] text-[11px] font-medium bg-[#f6f8fa] hover:bg-[#f3f4f6] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#1f2328] dark:text-[#e6edf3] border border-[#d0d7de] dark:border-[#30363d] transition-colors whitespace-nowrap shrink-0"
+            >
+              <GitPullRequest className="w-3 h-3 text-[#656d76] dark:text-[#8b949e]" />
+              <span>Import PR</span>
+            </button>
+          )}
+
+          {onOpenUpload && (
+            <button
+              onClick={onOpenUpload}
+              className="hidden sm:inline-flex items-center gap-1 h-6 px-2 rounded-[6px] text-[11px] font-medium bg-[#f6f8fa] hover:bg-[#f3f4f6] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#1f2328] dark:text-[#e6edf3] border border-[#d0d7de] dark:border-[#30363d] transition-colors whitespace-nowrap shrink-0"
+            >
+              <Plus className="w-3 h-3 text-[#656d76] dark:text-[#8b949e]" />
+              <span>Upload Diff</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Expandable Executive Summary & Actionable Recommendations */}
       {isSummaryExpanded && (
-        <div className="pt-3.5 border-t border-[#e4e4e7] dark:border-[#30363d] grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div className="pt-2.5 border-t border-[#d0d7de] dark:border-[#30363d] grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           {executive_summary && (
             <div className="space-y-1">
-              <span className="font-semibold text-[#171717] dark:text-[#e6edf3] block">
+              <span className="font-semibold text-[#1f2328] dark:text-[#e6edf3] block">
                 Review Summary
               </span>
-              <p className="text-[#52525b] dark:text-[#8b949e] leading-relaxed">
+              <p className="text-[#656d76] dark:text-[#8b949e] leading-snug">
                 {executive_summary}
               </p>
             </div>
@@ -272,10 +254,10 @@ export const RiskMeter: React.FC<RiskMeterProps> = ({
 
           {top_recommendations && top_recommendations.length > 0 && (
             <div className="space-y-1">
-              <span className="font-semibold text-[#171717] dark:text-[#e6edf3] block">
+              <span className="font-semibold text-[#1f2328] dark:text-[#e6edf3] block">
                 Recommended Actions
               </span>
-              <ol className="list-decimal list-inside space-y-1 text-[#52525b] dark:text-[#8b949e] leading-relaxed">
+              <ol className="list-decimal list-inside space-y-0.5 text-[#656d76] dark:text-[#8b949e] leading-snug">
                 {top_recommendations.map((rec, rIdx) => (
                   <li key={rIdx}>{rec}</li>
                 ))}

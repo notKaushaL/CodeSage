@@ -48,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         if (currentReport?.github_pr) {
           return `${currentReport.github_pr.owner}/${currentReport.github_pr.repo} #${currentReport.github_pr.pullNumber}`;
         }
-        return currentReport?.diff_title || 'Code Review';
+        return currentReport?.diff_title || 'Pull Request Review';
       case 'history':
         return 'Past Reviews';
       case 'pipeline':
@@ -113,56 +113,56 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 h-14 bg-white/95 dark:bg-[#161b22]/95 backdrop-blur-md border-b border-[#e4e4e7] dark:border-[#30363d] px-4 sm:px-6 flex items-center justify-between gap-4 select-none transition-colors">
-      {/* Zone 1: Breadcrumb & Context */}
-      <div className="flex items-center gap-2.5 min-w-0">
+    <header className="sticky top-0 z-30 h-12 bg-[#f6f8fa] dark:bg-[#161b22] border-b border-[#d0d7de] dark:border-[#30363d] px-3 sm:px-4 flex items-center justify-between gap-4 select-none transition-colors">
+      {/* Zone 1: Compact GitHub Context Breadcrumb */}
+      <div className="flex items-center gap-2 min-w-0">
         <button
           onClick={onOpenMobileSidebar}
-          className="md:hidden p-1.5 rounded-md hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] text-[#52525b] dark:text-[#8b949e]"
+          className="md:hidden p-1 rounded-[6px] hover:bg-[#eaeef2] dark:hover:bg-[#21262d] text-[#656d76] dark:text-[#8b949e]"
           aria-label="Open navigation menu"
         >
           <Menu className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2 text-xs min-w-0">
+        <div className="flex items-center gap-1.5 text-xs min-w-0">
           {onSelectPage ? (
             <button
               onClick={() => onSelectPage('dashboard')}
-              className="hidden sm:inline text-[#71717a] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] transition-colors whitespace-nowrap shrink-0"
+              className="hidden sm:inline text-[#656d76] dark:text-[#8b949e] hover:text-[#0969da] dark:hover:text-[#2f81f7] transition-colors whitespace-nowrap shrink-0"
             >
-              Workspace
+              codesage
             </button>
           ) : (
-            <span className="hidden sm:inline text-[#71717a] dark:text-[#8b949e] whitespace-nowrap shrink-0">
-              Workspace
+            <span className="hidden sm:inline text-[#656d76] dark:text-[#8b949e] whitespace-nowrap shrink-0">
+              codesage
             </span>
           )}
-          <span className="hidden sm:inline text-[#d4d4d8] dark:text-[#30363d]">/</span>
-          <span className="font-semibold text-[#171717] dark:text-[#e6edf3] truncate max-w-[200px] sm:max-w-[340px]">
+          <span className="hidden sm:inline text-[#656d76] dark:text-[#8b949e]">/</span>
+          <span className="font-semibold text-[#1f2328] dark:text-[#e6edf3] truncate max-w-[200px] sm:max-w-[320px]">
             {getPageTitle()}
           </span>
         </div>
       </div>
 
-      {/* Zone 2: Quick Top Navigation Links (Desktop) */}
+      {/* Zone 2: GitHub Pull Request Style Navigation Tabs */}
       {onSelectPage && (
-        <nav className="hidden xl:flex items-center gap-5 text-xs font-medium text-[#52525b] dark:text-[#8b949e]">
+        <nav className="hidden xl:flex items-center gap-4 text-xs font-medium text-[#656d76] dark:text-[#8b949e]">
           <button
             onClick={() => onSelectPage('diff')}
             className={`py-1 transition-colors whitespace-nowrap shrink-0 ${
               activePage === 'diff'
-                ? 'text-[#171717] dark:text-[#e6edf3] font-semibold underline decoration-[#0969da] dark:decoration-[#2f81f7] decoration-2 underline-offset-[18px]'
-                : 'hover:text-[#171717] dark:hover:text-[#e6edf3]'
+                ? 'text-[#1f2328] dark:text-[#e6edf3] font-semibold underline decoration-[#fd8c73] decoration-2 underline-offset-[14px]'
+                : 'hover:text-[#1f2328] dark:hover:text-[#e6edf3]'
             }`}
           >
-            Code Review
+            Files changed
           </button>
           <button
             onClick={() => onSelectPage('dashboard')}
             className={`py-1 transition-colors whitespace-nowrap shrink-0 ${
               activePage === 'dashboard'
-                ? 'text-[#171717] dark:text-[#e6edf3] font-semibold underline decoration-[#0969da] dark:decoration-[#2f81f7] decoration-2 underline-offset-[18px]'
-                : 'hover:text-[#171717] dark:hover:text-[#e6edf3]'
+                ? 'text-[#1f2328] dark:text-[#e6edf3] font-semibold underline decoration-[#fd8c73] decoration-2 underline-offset-[14px]'
+                : 'hover:text-[#1f2328] dark:hover:text-[#e6edf3]'
             }`}
           >
             Quick Start
@@ -171,8 +171,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onSelectPage('history')}
             className={`py-1 transition-colors whitespace-nowrap shrink-0 ${
               activePage === 'history'
-                ? 'text-[#171717] dark:text-[#e6edf3] font-semibold underline decoration-[#0969da] dark:decoration-[#2f81f7] decoration-2 underline-offset-[18px]'
-                : 'hover:text-[#171717] dark:hover:text-[#e6edf3]'
+                ? 'text-[#1f2328] dark:text-[#e6edf3] font-semibold underline decoration-[#fd8c73] decoration-2 underline-offset-[14px]'
+                : 'hover:text-[#1f2328] dark:hover:text-[#e6edf3]'
             }`}
           >
             Past Reviews
@@ -181,8 +181,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onSelectPage('pipeline')}
             className={`py-1 transition-colors whitespace-nowrap shrink-0 ${
               activePage === 'pipeline'
-                ? 'text-[#171717] dark:text-[#e6edf3] font-semibold underline decoration-[#0969da] dark:decoration-[#2f81f7] decoration-2 underline-offset-[18px]'
-                : 'hover:text-[#171717] dark:hover:text-[#e6edf3]'
+                ? 'text-[#1f2328] dark:text-[#e6edf3] font-semibold underline decoration-[#fd8c73] decoration-2 underline-offset-[14px]'
+                : 'hover:text-[#1f2328] dark:hover:text-[#e6edf3]'
             }`}
           >
             Engine Metrics
@@ -190,8 +190,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
       )}
 
-      {/* Zone 3: Primary Controls & Theme Switcher */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      {/* Zone 3: Compact GitHub Controls & Theme Switcher */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
         {/* Sample Diffs Selector */}
         <div className="relative">
           <button
@@ -199,23 +199,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               setIsSamplesOpen(!isSamplesOpen);
               setIsExportOpen(false);
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#171717] dark:text-[#e6edf3] border border-[#d4d4d8] dark:border-[#30363d] text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] bg-white hover:bg-[#f3f4f6] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#1f2328] dark:text-[#e6edf3] border border-[#d0d7de] dark:border-[#30363d] text-xs font-medium transition-colors whitespace-nowrap shrink-0"
             title="Try pre-built sample code diffs"
           >
-            <FolderGit2 className="w-3.5 h-3.5 text-[#52525b] dark:text-[#8b949e]" />
+            <FolderGit2 className="w-3.5 h-3.5 text-[#656d76] dark:text-[#8b949e]" />
             <span className="hidden sm:inline">Sample Diffs</span>
-            <ChevronDown className="w-3 h-3 text-[#71717a] dark:text-[#8b949e]" />
+            <ChevronDown className="w-3 h-3 text-[#656d76] dark:text-[#8b949e]" />
           </button>
 
           {isSamplesOpen && (
             <div 
-              className="absolute right-0 mt-1.5 w-72 p-1.5 bg-white dark:bg-[#161b22] border border-[#e4e4e7] dark:border-[#30363d] rounded-lg shadow-lg z-50 text-xs"
+              className="absolute right-0 mt-1 w-64 p-1 bg-white dark:bg-[#161b22] border border-[#d0d7de] dark:border-[#30363d] rounded-[6px] shadow-lg z-50 text-xs"
               onMouseLeave={() => setIsSamplesOpen(false)}
             >
-              <div className="text-[11px] font-medium text-[#71717a] dark:text-[#8b949e] px-2.5 py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
-                Select a sample diff to inspect
+              <div className="text-[11px] font-medium text-[#656d76] dark:text-[#8b949e] px-2 py-1 border-b border-[#d8dee4] dark:border-[#21262d]">
+                Select a sample diff
               </div>
-              <div className="mt-1 space-y-0.5">
+              <div className="mt-0.5 space-y-0.5">
                 {SAMPLE_DIFFS.map((sample) => (
                   <button
                     key={sample.id}
@@ -223,10 +223,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                       onSelectSample(sample);
                       setIsSamplesOpen(false);
                     }}
-                    className="w-full text-left px-2.5 py-2 rounded-md hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors flex flex-col gap-0.5"
+                    className="w-full text-left px-2 py-1.5 rounded-[4px] hover:bg-[#f6f8fa] dark:hover:bg-[#21262d] transition-colors flex flex-col"
                   >
-                    <span className="font-medium text-[#171717] dark:text-[#e6edf3] truncate">{sample.title}</span>
-                    <span className="text-[11px] text-[#71717a] dark:text-[#8b949e] truncate">{sample.badge}</span>
+                    <span className="font-medium text-[#1f2328] dark:text-[#e6edf3] truncate">{sample.title}</span>
+                    <span className="text-[11px] text-[#656d76] dark:text-[#8b949e] truncate">{sample.badge}</span>
                   </button>
                 ))}
               </div>
@@ -242,63 +242,63 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setIsExportOpen(!isExportOpen);
                 setIsSamplesOpen(false);
               }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#171717] dark:text-[#e6edf3] border border-[#d4d4d8] dark:border-[#30363d] text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+              className="flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] bg-white hover:bg-[#f3f4f6] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#1f2328] dark:text-[#e6edf3] border border-[#d0d7de] dark:border-[#30363d] text-xs font-medium transition-colors whitespace-nowrap shrink-0"
               title="Export review report"
             >
-              <Download className="w-3.5 h-3.5 text-[#52525b] dark:text-[#8b949e]" />
+              <Download className="w-3.5 h-3.5 text-[#656d76] dark:text-[#8b949e]" />
               <span className="hidden sm:inline">Export</span>
-              <ChevronDown className="w-3 h-3 text-[#71717a] dark:text-[#8b949e]" />
+              <ChevronDown className="w-3 h-3 text-[#656d76] dark:text-[#8b949e]" />
             </button>
 
             {isExportOpen && (
               <div 
-                className="absolute right-0 mt-1.5 w-48 p-1.5 bg-white dark:bg-[#161b22] border border-[#e4e4e7] dark:border-[#30363d] rounded-lg shadow-lg z-50 text-xs"
+                className="absolute right-0 mt-1 w-44 p-1 bg-white dark:bg-[#161b22] border border-[#d0d7de] dark:border-[#30363d] rounded-[6px] shadow-lg z-50 text-xs"
                 onMouseLeave={() => setIsExportOpen(false)}
               >
                 <button
                   onClick={exportAsMarkdown}
-                  className="w-full text-left px-2.5 py-2 rounded-md hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors flex items-center gap-2 text-[#171717] dark:text-[#e6edf3]"
+                  className="w-full text-left px-2 py-1.5 rounded-[4px] hover:bg-[#f6f8fa] dark:hover:bg-[#21262d] transition-colors flex items-center gap-2 text-[#1f2328] dark:text-[#e6edf3]"
                 >
-                  <FileText className="w-3.5 h-3.5 text-[#71717a] dark:text-[#8b949e]" />
-                  <span>Markdown Report (.md)</span>
+                  <FileText className="w-3.5 h-3.5 text-[#656d76] dark:text-[#8b949e]" />
+                  <span>Markdown (.md)</span>
                 </button>
                 <button
                   onClick={exportAsJSON}
-                  className="w-full text-left px-2.5 py-2 rounded-md hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors flex items-center gap-2 text-[#171717] dark:text-[#e6edf3]"
+                  className="w-full text-left px-2 py-1.5 rounded-[4px] hover:bg-[#f6f8fa] dark:hover:bg-[#21262d] transition-colors flex items-center gap-2 text-[#1f2328] dark:text-[#e6edf3]"
                 >
-                  <Download className="w-3.5 h-3.5 text-[#71717a] dark:text-[#8b949e]" />
-                  <span>JSON Data (.json)</span>
+                  <Download className="w-3.5 h-3.5 text-[#656d76] dark:text-[#8b949e]" />
+                  <span>JSON (.json)</span>
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Theme Toggle Button (Vercel Light / GitHub Dark) */}
+        {/* GitHub Light / Dark Theme Toggle */}
         <button
           onClick={onToggleTheme}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#fafafa] hover:bg-[#f4f4f5] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#171717] dark:text-[#e6edf3] border border-[#d4d4d8] dark:border-[#30363d] text-xs font-medium transition-colors whitespace-nowrap shrink-0"
-          title={theme === 'dark' ? 'Switch to Light Mode (Vercel/Apple style)' : 'Switch to Dark Mode (GitHub style)'}
+          className="flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] bg-white hover:bg-[#f3f4f6] dark:bg-[#21262d] dark:hover:bg-[#30363d] text-[#1f2328] dark:text-[#e6edf3] border border-[#d0d7de] dark:border-[#30363d] text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+          title={theme === 'dark' ? 'Switch to GitHub Light Theme' : 'Switch to GitHub Dark Theme'}
           aria-label={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
         >
           {theme === 'dark' ? (
             <>
-              <Sun className="w-3.5 h-3.5 text-amber-400" />
+              <Sun className="w-3.5 h-3.5 text-[#d29922]" />
               <span className="hidden md:inline">Light</span>
             </>
           ) : (
             <>
-              <Moon className="w-3.5 h-3.5 text-[#52525b]" />
+              <Moon className="w-3.5 h-3.5 text-[#656d76]" />
               <span className="hidden md:inline">Dark</span>
             </>
           )}
         </button>
 
-        {/* Primary Action: New Review */}
+        {/* GitHub Primary Green CTA Button */}
         <button
           onClick={onOpenUpload}
           disabled={isLoading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#171717] hover:bg-[#27272a] text-white dark:bg-[#238636] dark:hover:bg-[#2ea043] dark:text-white text-xs font-medium transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
+          className="flex items-center gap-1 h-7 px-2.5 rounded-[6px] bg-[#1f883d] hover:bg-[#1a7f37] text-white dark:bg-[#238636] dark:hover:bg-[#2ea043] dark:text-white text-xs font-medium transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
         >
           {isLoading ? (
             <>

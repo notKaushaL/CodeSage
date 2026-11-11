@@ -37,23 +37,23 @@ export const InlineFindingCard: React.FC<InlineFindingCardProps> = ({
       case 'CRITICAL':
         return {
           border: 'border-[#cf222e]/40 dark:border-[#f85149]/50',
-          headerBg: 'bg-[#ffebe9]/60 dark:bg-[#f85149]/10',
+          headerBg: 'bg-[#ffebe9]/50 dark:bg-[#f85149]/10',
           textColor: 'text-[#cf222e] dark:text-[#f85149]',
           icon: <AlertOctagon className="w-3.5 h-3.5 text-[#cf222e] dark:text-[#f85149] flex-shrink-0" />,
         };
       case 'HIGH':
         return {
-          border: 'border-[#d97706]/40 dark:border-[#d29922]/50',
-          headerBg: 'bg-[#fef3c7]/60 dark:bg-[#d29922]/10',
-          textColor: 'text-[#d97706] dark:text-[#d29922]',
-          icon: <AlertTriangle className="w-3.5 h-3.5 text-[#d97706] dark:text-[#d29922] flex-shrink-0" />,
+          border: 'border-[#9a6700]/40 dark:border-[#d29922]/50',
+          headerBg: 'bg-[#fff8c5]/60 dark:bg-[#d29922]/10',
+          textColor: 'text-[#9a6700] dark:text-[#d29922]',
+          icon: <AlertTriangle className="w-3.5 h-3.5 text-[#9a6700] dark:text-[#d29922] flex-shrink-0" />,
         };
       case 'MEDIUM':
         return {
-          border: 'border-[#ca8a04]/40 dark:border-[#e3b341]/40',
-          headerBg: 'bg-[#fef9c3]/50 dark:bg-[#e3b341]/10',
-          textColor: 'text-[#a16207] dark:text-[#e3b341]',
-          icon: <Layers className="w-3.5 h-3.5 text-[#a16207] dark:text-[#e3b341] flex-shrink-0" />,
+          border: 'border-[#9a6700]/30 dark:border-[#e3b341]/40',
+          headerBg: 'bg-[#fff8c5]/40 dark:bg-[#e3b341]/10',
+          textColor: 'text-[#9a6700] dark:text-[#e3b341]',
+          icon: <Layers className="w-3.5 h-3.5 text-[#9a6700] dark:text-[#e3b341] flex-shrink-0" />,
         };
       default:
         return {
@@ -70,43 +70,43 @@ export const InlineFindingCard: React.FC<InlineFindingCardProps> = ({
   const getSourceLabel = (source: string) => {
     if (source === 'HYBRID_CONSENSUS') return 'Hybrid Consensus';
     if (source === 'GEMINI_ENGINE') return 'Gemini AI';
-    return 'Static Analysis';
+    return 'Static Rule';
   };
 
   return (
     <div
       id={`finding-${finding.id}`}
       data-testid={`finding-card-${finding.id}`}
-      className={`my-2 mx-3 sm:mx-8 rounded-lg border bg-white dark:bg-[#161b22] overflow-hidden font-sans transition-all ${
+      className={`my-1.5 mx-3 max-w-4xl rounded-[6px] border bg-white dark:bg-[#161b22] overflow-hidden font-sans whitespace-normal transition-all ${
         isActive
-          ? 'ring-2 ring-[#0969da] dark:ring-[#2f81f7] border-[#0969da] dark:border-[#2f81f7] shadow-md'
-          : `${sevConfig.border} shadow-2xs`
+          ? 'ring-2 ring-[#0969da] dark:ring-[#2f81f7] border-[#0969da] dark:border-[#2f81f7]'
+          : sevConfig.border
       }`}
     >
-      {/* GitHub PR Review Comment Style Header */}
-      <div className={`px-3.5 py-2 border-b border-[#e4e4e7] dark:border-[#30363d] flex flex-wrap items-center justify-between gap-2 ${sevConfig.headerBg}`}>
-        <div className="flex items-center gap-2 flex-wrap text-xs">
+      {/* Compact GitHub Code Scanning / Review Thread Header */}
+      <div className={`px-3 py-1.5 border-b border-[#d0d7de] dark:border-[#30363d] flex flex-wrap items-center justify-between gap-2 ${sevConfig.headerBg}`}>
+        <div className="flex items-center gap-1.5 flex-wrap text-xs">
           {sevConfig.icon}
-          <span className={`font-semibold font-mono ${sevConfig.textColor}`}>
+          <span className={`font-semibold font-mono text-[11px] ${sevConfig.textColor}`}>
             {finding.severity}
           </span>
-          <span className="text-[#a1a1aa] dark:text-[#484f58]">·</span>
-          <span className="font-semibold text-[#171717] dark:text-[#e6edf3]">
+          <span className="text-[#656d76] dark:text-[#8b949e]">·</span>
+          <span className="font-semibold text-[#1f2328] dark:text-[#e6edf3]">
             {finding.title}
           </span>
-          <span className="text-[#a1a1aa] dark:text-[#484f58]">·</span>
-          <span className="font-mono text-[11px] text-[#52525b] dark:text-[#8b949e]">
+          <span className="text-[#656d76] dark:text-[#8b949e]">·</span>
+          <span className="font-mono text-[11px] text-[#656d76] dark:text-[#8b949e]">
             Line {finding.line_number}
           </span>
 
           {finding.cwe_id && (
             <>
-              <span className="text-[#a1a1aa] dark:text-[#484f58]">·</span>
+              <span className="text-[#656d76] dark:text-[#8b949e]">·</span>
               <a
                 href={`https://cwe.mitre.org/data/definitions/${finding.cwe_id.replace('CWE-', '')}.html`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] font-mono text-[#0969da] dark:text-[#58a6ff] hover:underline"
+                className="inline-flex items-center gap-0.5 text-[11px] font-mono text-[#0969da] dark:text-[#2f81f7] hover:underline"
                 title="Open MITRE CWE Reference"
               >
                 <span>{finding.cwe_id}</span>
@@ -116,7 +116,7 @@ export const InlineFindingCard: React.FC<InlineFindingCardProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] text-[#52525b] dark:text-[#8b949e]">
+        <div className="flex items-center gap-1.5 text-[11px] text-[#656d76] dark:text-[#8b949e]">
           <span>{finding.category}</span>
           <span>·</span>
           <span>{getSourceLabel(finding.source)}</span>
@@ -125,7 +125,7 @@ export const InlineFindingCard: React.FC<InlineFindingCardProps> = ({
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[#52525b] dark:text-[#8b949e] transition-colors ml-1"
+            className="p-0.5 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[#656d76] dark:text-[#8b949e] transition-colors ml-1"
             title={isExpanded ? 'Collapse details' : 'Expand details'}
             aria-label={isExpanded ? 'Collapse finding details' : 'Expand finding details'}
           >
@@ -134,20 +134,20 @@ export const InlineFindingCard: React.FC<InlineFindingCardProps> = ({
         </div>
       </div>
 
-      {/* Body: Explanation & Suggested Code Fix */}
+      {/* Compact Body: Explanation & Suggested Change */}
       {isExpanded && (
-        <div className="p-3.5 space-y-3 text-xs">
-          <p className="text-[#171717] dark:text-[#e6edf3] leading-relaxed">
+        <div className="px-3 py-2 space-y-2 text-xs">
+          <p className="text-[#1f2328] dark:text-[#e6edf3] leading-snug">
             {finding.description}
           </p>
 
           {finding.suggestion_diff && (
-            <div className="rounded-md border border-[#e4e4e7] dark:border-[#30363d] overflow-hidden bg-[#f6f8fa] dark:bg-[#0d1117]">
-              <div className="flex items-center justify-between px-3 py-1.5 bg-[#f4f4f5] dark:bg-[#161b22] border-b border-[#e4e4e7] dark:border-[#30363d] text-[11px] text-[#52525b] dark:text-[#8b949e]">
-                <span className="font-medium text-[#171717] dark:text-[#e6edf3]">Suggested Fix</span>
+            <div className="rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] overflow-hidden bg-[#f6f8fa] dark:bg-[#0d1117]">
+              <div className="flex items-center justify-between px-2.5 py-1 bg-[#f6f8fa] dark:bg-[#161b22] border-b border-[#d0d7de] dark:border-[#30363d] text-[11px] text-[#656d76] dark:text-[#8b949e]">
+                <span className="font-medium text-[#1f2328] dark:text-[#e6edf3]">Suggested change</span>
                 <button
                   onClick={handleCopyPatch}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#171717] dark:text-[#e6edf3] hover:text-[#0969da] dark:hover:text-[#58a6ff] px-2 py-0.5 rounded hover:bg-[#e4e4e7]/60 dark:hover:bg-[#21262d] transition-colors"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[#1f2328] dark:text-[#e6edf3] hover:text-[#0969da] dark:hover:text-[#2f81f7] px-1.5 py-0.5 rounded hover:bg-[#d0d7de]/40 dark:hover:bg-[#30363d] transition-colors"
                 >
                   {copied ? (
                     <>
@@ -157,20 +157,21 @@ export const InlineFindingCard: React.FC<InlineFindingCardProps> = ({
                   ) : (
                     <>
                       <Copy className="w-3 h-3" />
-                      <span>Copy Patch</span>
+                      <span>Copy patch</span>
                     </>
                   )}
                 </button>
               </div>
-              <div className="p-2.5 font-mono text-xs overflow-x-auto space-y-0.5">
+              <div className="py-1 font-mono text-[11px] leading-[18px]">
                 {finding.suggestion_diff.split('\n').map((patchLine, pIdx) => {
                   if (patchLine.startsWith('+')) {
                     return (
                       <div
                         key={pIdx}
-                        className="text-[#116329] dark:text-[#3fb950] bg-[#dafbe1] dark:bg-[#2ea043]/15 px-2 py-0.5 rounded-xs"
+                        className="text-[#1f2328] dark:text-[#e6edf3] gh-diff-add px-2.5 whitespace-pre-wrap break-all"
                       >
-                        {patchLine}
+                        <span className="text-[#1a7f37] dark:text-[#3fb950] font-semibold mr-1">+</span>
+                        {patchLine.slice(1)}
                       </div>
                     );
                   }
@@ -178,14 +179,15 @@ export const InlineFindingCard: React.FC<InlineFindingCardProps> = ({
                     return (
                       <div
                         key={pIdx}
-                        className="text-[#cf222e] dark:text-[#f85149] bg-[#ffebe9] dark:bg-[#f85149]/15 px-2 py-0.5 rounded-xs"
+                        className="text-[#1f2328] dark:text-[#e6edf3] gh-diff-del px-2.5 whitespace-pre-wrap break-all"
                       >
-                        {patchLine}
+                        <span className="text-[#cf222e] dark:text-[#f85149] font-semibold mr-1">-</span>
+                        {patchLine.slice(1)}
                       </div>
                     );
                   }
                   return (
-                    <div key={pIdx} className="text-[#52525b] dark:text-[#8b949e] px-2">
+                    <div key={pIdx} className="text-[#656d76] dark:text-[#8b949e] px-2.5 whitespace-pre-wrap break-all">
                       {patchLine}
                     </div>
                   );

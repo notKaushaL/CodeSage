@@ -32,7 +32,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [history, setHistory] = useState<ReviewReport[]>([INITIAL_SEED_REPORT]);
-  const [defaultViewMode, setDefaultViewMode] = useState<'unified' | 'split'>('unified');
+  const [defaultViewMode, setDefaultViewMode] = useState<'unified' | 'split'>('split');
 
   // Theme Management (Light / Dark)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -181,7 +181,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#0d1117] text-[#171717] dark:text-[#e6edf3] flex font-sans selection:bg-[#0969da]/20 dark:selection:bg-[#2f81f7]/30 transition-colors">
+    <div className="min-h-screen bg-white dark:bg-[#0d1117] text-[#1f2328] dark:text-[#e6edf3] flex font-sans selection:bg-[#0969da]/20 dark:selection:bg-[#2f81f7]/30 transition-colors">
       {/* Collapsible Application Sidebar */}
       <Sidebar
         activePage={activePage}
@@ -211,11 +211,11 @@ export default function App() {
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
         />
 
-        {/* Content Body */}
-        <main className="flex-1 max-w-[1440px] w-full mx-auto p-4 sm:p-6 flex flex-col gap-5">
+        {/* Compact Full-Width Workspace Body */}
+        <main className="flex-1 w-full px-3 sm:px-4 py-3 flex flex-col gap-3">
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-3.5 rounded-lg bg-[#ffebe9] dark:bg-[#f85149]/15 border border-[#cf222e]/30 dark:border-[#f85149]/40 text-[#cf222e] dark:text-[#f85149] text-xs flex items-center justify-between gap-3">
+            <div className="px-3 py-2 rounded-[6px] bg-[#ffebe9] dark:bg-[#f85149]/15 border border-[#cf222e]/30 dark:border-[#f85149]/40 text-[#cf222e] dark:text-[#f85149] text-xs flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{errorMessage}</span>
@@ -231,16 +231,11 @@ export default function App() {
 
           {/* Loading Pipeline State Indicator */}
           {isLoading && (
-            <div className="p-5 rounded-lg bg-white dark:bg-[#161b22] border border-[#e4e4e7] dark:border-[#30363d] flex flex-col items-center justify-center text-center space-y-2.5">
-              <div className="w-7 h-7 rounded-full border-2 border-[#d4d4d8] dark:border-[#30363d] border-t-[#171717] dark:border-t-[#e6edf3] animate-spin" />
-              <div>
-                <h3 className="text-xs font-semibold text-[#171717] dark:text-[#e6edf3]">
-                  Analyzing Code Changes...
-                </h3>
-                <p className="text-[11px] text-[#71717a] dark:text-[#8b949e] mt-0.5">
-                  Parsing diff lines, scanning for secrets & vulnerabilities, and computing health score
-                </p>
-              </div>
+            <div className="p-4 rounded-[6px] bg-[#f6f8fa] dark:bg-[#161b22] border border-[#d0d7de] dark:border-[#30363d] flex items-center justify-center gap-3 text-xs">
+              <div className="w-4 h-4 rounded-full border-2 border-[#d0d7de] dark:border-[#30363d] border-t-[#1f2328] dark:border-t-[#e6edf3] animate-spin" />
+              <span className="font-medium text-[#1f2328] dark:text-[#e6edf3]">
+                Analyzing code changes and aligning side-by-side diff...
+              </span>
             </div>
           )}
 
@@ -257,10 +252,10 @@ export default function App() {
             />
           )}
 
-          {/* View 2: Code Review Workspace */}
+          {/* View 2: Code Review Workspace (GitHub PR Files Changed Layout) */}
           {activePage === 'diff' && currentReport && (
-            <div className="space-y-4 flex flex-col flex-1">
-              {/* Review Summary Header */}
+            <div className="space-y-3 flex flex-col flex-1">
+              {/* Compact PR Review Header & Severity Filter Toolbar */}
               <RiskMeter
                 diffTitle={currentReport.diff_title}
                 summary={currentReport.summary}
@@ -273,8 +268,8 @@ export default function App() {
                 onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
               />
 
-              {/* Workspace Layout: Files & Issues Navigator + Diff Viewer */}
-              <div className="flex flex-col lg:flex-row items-start gap-4 flex-1">
+              {/* Workspace Layout: Compact File Tree + Side-by-Side Diff Viewer */}
+              <div className="flex flex-col lg:flex-row items-start gap-3 flex-1 min-w-0">
                 <FileSidebar
                   files={currentReport.parsed_diff?.files || []}
                   findings={currentReport.findings}

@@ -14,10 +14,10 @@ export const PipelineInspector: React.FC<PipelineInspectorProps> = ({ report }) 
 
   if (!report) {
     return (
-      <div className="bg-white dark:bg-[#161b22] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] p-12 text-center text-[#71717a] dark:text-[#8b949e] max-w-2xl mx-auto">
-        <Zap className="w-8 h-8 mx-auto text-[#a1a1aa] dark:text-[#6e7681] mb-2.5" />
-        <h3 className="text-sm font-semibold text-[#171717] dark:text-[#e6edf3]">No Review Run Selected</h3>
-        <p className="text-xs text-[#52525b] dark:text-[#8b949e] mt-1">
+      <div className="bg-white dark:bg-[#161b22] rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] p-8 text-center text-[#656d76] dark:text-[#8b949e] max-w-2xl mx-auto">
+        <Zap className="w-6 h-6 mx-auto text-[#656d76] dark:text-[#8b949e] mb-2" />
+        <h3 className="text-xs font-semibold text-[#1f2328] dark:text-[#e6edf3]">No Review Run Selected</h3>
+        <p className="text-xs text-[#656d76] dark:text-[#8b949e] mt-0.5">
           Submit a diff or open a sample review to inspect pipeline metrics.
         </p>
       </div>
@@ -102,68 +102,68 @@ export const PipelineInspector: React.FC<PipelineInspectorProps> = ({ report }) 
   const currentStage = stages.find((s) => s.id === activeStage) || stages[0];
 
   return (
-    <div className="space-y-5 max-w-5xl mx-auto">
+    <div className="space-y-3 max-w-5xl mx-auto">
       {/* Top Metric Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-[#161b22] p-4 rounded-lg border border-[#e4e4e7] dark:border-[#30363d]">
-          <span className="text-xs text-[#52525b] dark:text-[#8b949e] block">Total Analysis Time</span>
-          <span className="text-lg font-bold font-mono text-[#171717] dark:text-[#e6edf3] tabular-nums mt-1 block">
+        <div className="bg-white dark:bg-[#161b22] p-3 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d]">
+          <span className="text-[11px] text-[#656d76] dark:text-[#8b949e] block">Total Analysis Time</span>
+          <span className="text-base font-bold font-mono text-[#1f2328] dark:text-[#e6edf3] tabular-nums mt-0.5 block">
             {metrics?.durationMs || 0} ms
           </span>
         </div>
 
-        <div className="bg-white dark:bg-[#161b22] p-4 rounded-lg border border-[#e4e4e7] dark:border-[#30363d]">
-          <span className="text-xs text-[#52525b] dark:text-[#8b949e] block">Static Scanner Issues</span>
-          <span className="text-lg font-bold font-mono text-[#171717] dark:text-[#e6edf3] tabular-nums mt-1 block">
+        <div className="bg-white dark:bg-[#161b22] p-3 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d]">
+          <span className="text-[11px] text-[#656d76] dark:text-[#8b949e] block">Static Scanner Issues</span>
+          <span className="text-base font-bold font-mono text-[#1f2328] dark:text-[#e6edf3] tabular-nums mt-0.5 block">
             {metrics?.staticFindingsCount || 0}
           </span>
         </div>
 
-        <div className="bg-white dark:bg-[#161b22] p-4 rounded-lg border border-[#e4e4e7] dark:border-[#30363d]">
-          <span className="text-xs text-[#52525b] dark:text-[#8b949e] block">Gemini AI Issues</span>
-          <span className="text-lg font-bold font-mono text-[#171717] dark:text-[#e6edf3] tabular-nums mt-1 block">
+        <div className="bg-white dark:bg-[#161b22] p-3 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d]">
+          <span className="text-[11px] text-[#656d76] dark:text-[#8b949e] block">Gemini AI Issues</span>
+          <span className="text-base font-bold font-mono text-[#1f2328] dark:text-[#e6edf3] tabular-nums mt-0.5 block">
             {metrics?.aiFindingsCount || 0}
           </span>
         </div>
 
-        <div className="bg-white dark:bg-[#161b22] p-4 rounded-lg border border-[#e4e4e7] dark:border-[#30363d]">
-          <span className="text-xs text-[#52525b] dark:text-[#8b949e] block">Health Score</span>
-          <span className="text-lg font-bold font-mono text-[#171717] dark:text-[#e6edf3] tabular-nums mt-1 block">
+        <div className="bg-white dark:bg-[#161b22] p-3 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d]">
+          <span className="text-[11px] text-[#656d76] dark:text-[#8b949e] block">Health Score</span>
+          <span className="text-base font-bold font-mono text-[#1f2328] dark:text-[#e6edf3] tabular-nums mt-0.5 block">
             {summary.overall_risk_score} / 100
           </span>
         </div>
       </div>
 
       {/* Interactive 5-Stage Inspector */}
-      <div className="bg-white dark:bg-[#161b22] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] p-5 space-y-5">
+      <div className="bg-white dark:bg-[#161b22] rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] p-4 space-y-3">
         <div>
-          <h2 className="text-sm font-semibold text-[#171717] dark:text-[#e6edf3]">
+          <h2 className="text-xs font-semibold text-[#1f2328] dark:text-[#e6edf3]">
             5-Stage Review Pipeline Breakdown
           </h2>
-          <p className="text-xs text-[#52525b] dark:text-[#8b949e] mt-0.5">
-            Click any stage below to see how your diff was processed
+          <p className="text-[11px] text-[#656d76] dark:text-[#8b949e]">
+            Click any stage below to inspect execution telemetry
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 mt-3">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 mt-2.5">
             {stages.map((stage) => {
               const isSelected = activeStage === stage.id;
               return (
                 <button
                   key={stage.id}
                   onClick={() => setActiveStage(stage.id)}
-                  className={`p-3 rounded-md text-left transition-colors flex flex-col gap-1 border ${
+                  className={`p-2.5 rounded-[6px] text-left transition-colors flex flex-col gap-0.5 border ${
                     isSelected
-                      ? 'bg-[#f4f4f5] dark:bg-[#21262d] border-[#0969da] dark:border-[#2f81f7]'
-                      : 'bg-[#fafafa] dark:bg-[#0d1117] border-[#e4e4e7] dark:border-[#30363d] hover:border-[#a1a1aa] dark:hover:border-[#484f58]'
+                      ? 'bg-[#f6f8fa] dark:bg-[#21262d] border-[#0969da] dark:border-[#2f81f7]'
+                      : 'bg-white dark:bg-[#0d1117] border-[#d0d7de] dark:border-[#30363d] hover:border-[#8c959f] dark:hover:border-[#484f58]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-semibold text-[#71717a] dark:text-[#8b949e]">
+                    <span className="text-[11px] font-mono font-semibold text-[#656d76] dark:text-[#8b949e]">
                       Step 0{stage.id}
                     </span>
-                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#0969da] dark:text-[#58a6ff]" />}
+                    {isSelected && <CheckCircle2 className="w-3 h-3 text-[#0969da] dark:text-[#58a6ff]" />}
                   </div>
-                  <span className="text-xs font-semibold text-[#171717] dark:text-[#e6edf3] truncate">
+                  <span className="text-xs font-semibold text-[#1f2328] dark:text-[#e6edf3] truncate">
                     {stage.title.split('. ')[1]}
                   </span>
                 </button>
@@ -173,34 +173,34 @@ export const PipelineInspector: React.FC<PipelineInspectorProps> = ({ report }) 
         </div>
 
         {/* Stage Detail View */}
-        <div className="p-4 rounded-md border border-[#e4e4e7] dark:border-[#30363d] bg-[#fafafa] dark:bg-[#0d1117] space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#e4e4e7] dark:border-[#30363d]">
+        <div className="p-3.5 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] bg-[#f6f8fa] dark:bg-[#0d1117] space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#d0d7de] dark:border-[#30363d]">
             <div>
-              <h3 className="text-sm font-semibold text-[#171717] dark:text-[#e6edf3]">{currentStage.title}</h3>
-              <p className="text-xs text-[#52525b] dark:text-[#8b949e]">{currentStage.subtitle}</p>
+              <h3 className="text-xs font-semibold text-[#1f2328] dark:text-[#e6edf3]">{currentStage.title}</h3>
+              <p className="text-[11px] text-[#656d76] dark:text-[#8b949e]">{currentStage.subtitle}</p>
             </div>
-            <span className="text-xs font-mono text-[#52525b] dark:text-[#8b949e]">
+            <span className="text-xs font-mono text-[#656d76] dark:text-[#8b949e]">
               {currentStage.summaryText}
             </span>
           </div>
 
-          <p className="text-xs text-[#171717] dark:text-[#e6edf3] leading-relaxed">
+          <p className="text-xs text-[#1f2328] dark:text-[#e6edf3] leading-snug">
             {currentStage.description}
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {currentStage.metrics.map((m, mIdx) => (
-              <div key={mIdx} className="bg-white dark:bg-[#161b22] p-3 rounded-md border border-[#e4e4e7] dark:border-[#30363d]">
-                <span className="text-[11px] text-[#71717a] dark:text-[#8b949e] block">{m.label}</span>
-                <span className="text-xs font-bold font-mono text-[#171717] dark:text-[#e6edf3] tabular-nums mt-0.5 block">
+              <div key={mIdx} className="bg-white dark:bg-[#161b22] p-2.5 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d]">
+                <span className="text-[11px] text-[#656d76] dark:text-[#8b949e] block">{m.label}</span>
+                <span className="text-xs font-bold font-mono text-[#1f2328] dark:text-[#e6edf3] tabular-nums mt-0.5 block">
                   {m.value}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="text-xs text-[#52525b] dark:text-[#8b949e] pt-1">
-            <strong className="text-[#171717] dark:text-[#e6edf3]">How it works:</strong> {currentStage.details}
+          <div className="text-xs text-[#656d76] dark:text-[#8b949e]">
+            <strong className="text-[#1f2328] dark:text-[#e6edf3]">How it works:</strong> {currentStage.details}
           </div>
         </div>
       </div>

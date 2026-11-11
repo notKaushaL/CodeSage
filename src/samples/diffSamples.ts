@@ -16,18 +16,20 @@ export const SAMPLE_DIFFS: SampleDiff[] = [
 index 45f8a12..9bc3110 100644
 --- a/src/api/authService.ts
 +++ b/src/api/authService.ts
-@@ -14,6 +14,14 @@ export class AuthService {
+@@ -14,8 +14,14 @@ export class AuthService {
    private db: DatabasePool;
 
    constructor(db: DatabasePool) {
      this.db = db;
+-    const awsRootKey = process.env.AWS_ACCESS_KEY_ID;
+-    const jwtSecret = process.env.JWT_SECRET;
 +    // Temporary test credentials committed by developer
 +    const awsRootKey = "AKIAIOSFODNN7EXAMPLE";
 +    const jwtSecret = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.t-IDcSemACt8x4iTMC6Y5";
    }
 
    public async verifySession(token: string): Promise<UserSession | null> {
-@@ -35,7 +43,12 @@ export class AuthService {
+@@ -35,7 +41,12 @@ export class AuthService {
    public async searchUsers(userInput: string) {
 -    return this.db.query('SELECT id, username, email FROM users WHERE active = true');
 +    // Dynamic search query constructed directly from user-supplied query string

@@ -5,6 +5,7 @@ import {
   FileCode, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
   Keyboard, 
   X
 } from 'lucide-react';
@@ -47,9 +48,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   activeFindingId: propActiveFindingId,
   onSelectFindingId: propOnSelectFindingId,
   theme = 'dark',
-  defaultViewMode = 'unified',
+  defaultViewMode = 'split',
 }) => {
   const [viewMode, setViewMode] = useState<'unified' | 'split'>(defaultViewMode);
+  const [isFileCollapsed, setIsFileCollapsed] = useState(false);
   const [localActiveFindingId, setLocalActiveFindingId] = useState<string | null>(null);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [highlightedTokensMap, setHighlightedTokensMap] = useState<Map<string, HighlightedToken[]>>(new Map());
@@ -57,6 +59,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   useEffect(() => {
     setViewMode(defaultViewMode);
   }, [defaultViewMode]);
+
+  useEffect(() => {
+    setIsFileCollapsed(false);
+  }, [selectedFileIndex]);
 
   const activeFindingId = propActiveFindingId !== undefined ? propActiveFindingId : localActiveFindingId;
   const setActiveFindingId = (id: string | null) => {
@@ -190,6 +196,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       onSelectFileIndex(target.fileIndex);
     }
 
+    setIsFileCollapsed(false);
     setActiveFindingId(target.finding.id);
 
     setTimeout(() => {
@@ -251,49 +258,79 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
   if (!activeFile) {
     return (
-      <div className="flex-1 bg-white dark:bg-[#161b22] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] p-12 text-center text-[#71717a] dark:text-[#8b949e]">
-        <FileCode className="w-10 h-10 mx-auto text-[#a1a1aa] dark:text-[#6e7681] mb-2.5" />
-        <p className="text-sm font-medium">No modified files to display in this review run.</p>
+      <div className="flex-1 bg-white dark:bg-[#0d1117] rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] p-8 text-center text-[#656d76] dark:text-[#8b949e]">
+        <FileCode className="w-8 h-8 mx-auto text-[#6e7781] dark:text-[#6e7681] mb-2" />
+        <p className="text-xs font-medium">No modified files to display in this review run.</p>
       </div>
     );
   }
 
+  // Compute GitHub 5-block diffstat squares
+  const totalChanges = activeFile.addedLineCount + activeFile.deletedLineCount;
+  const addBlocks = totalChanges > 0 ? Math.round((activeFile.addedLineCount / totalChanges) * 5) : 0;
+  const delBlocks = totalChanges > 0 ? Math.min(5 - addBlocks, Math.round((activeFile.deletedLineCount / totalChanges) * 5)) : 0;
+  const neutralBlocks = Math.max(0, 5 - addBlocks - delBlocks);
+
+  const displayPath = activeFile.newPath !== '/dev/null' ? activeFile.newPath : activeFile.oldPath;
+  const oldDisplayPath = activeFile.oldPath !== '/dev/null' ? activeFile.oldPath : displayPath;
+  const newDisplayPath = activeFile.newPath !== '/dev/null' ? activeFile.newPath : displayPath;
+
   return (
-    <div className="flex-1 min-w-0 bg-white dark:bg-[#0d1117] rounded-lg border border-[#e4e4e7] dark:border-[#30363d] overflow-hidden flex flex-col relative transition-colors">
-      {/* GitHub PR File Header Bar */}
-      <div className="bg-[#f6f8fa] dark:bg-[#161b22] px-4 py-2.5 border-b border-[#e4e4e7] dark:border-[#30363d] flex flex-wrap items-center justify-between gap-3">
-        {/* Left: File path & language */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <FileCode className="w-4 h-4 text-[#52525b] dark:text-[#8b949e] flex-shrink-0" />
+    <div className="flex-1 min-w-0 bg-white dark:bg-[#0d1117] rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] flex flex-col relative transition-colors">
+      {/* Compact GitHub PR File Header Bar (Sticky while scrolling) */}
+      <div className="bg-[#f6f8fa] dark:bg-[#161b22] px-3 py-1.5 border-b border-[#d0d7de] dark:border-[#30363d] rounded-t-[6px] flex flex-wrap items-center justify-between gap-2 sticky top-12 z-20">
+        {/* Left: Collapse Chevron, File Path, Diffstat Squares */}
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            onClick={() => setIsFileCollapsed(!isFileCollapsed)}
+            className="p-0.5 rounded hover:bg-[#d0d7de]/50 dark:hover:bg-[#30363d] text-[#656d76] dark:text-[#8b949e] transition-colors flex-shrink-0"
+            title={isFileCollapsed ? 'Expand file diff' : 'Collapse file diff'}
+            aria-label={isFileCollapsed ? 'Expand file diff' : 'Collapse file diff'}
+          >
+            {isFileCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+
           <div className="min-w-0 flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-xs font-semibold text-[#171717] dark:text-[#e6edf3] truncate">
-              {activeFile.newPath !== '/dev/null' ? activeFile.newPath : activeFile.oldPath}
-            </span>
-            <span className="text-[#a1a1aa] dark:text-[#484f58]">·</span>
-            <span className="text-[11px] font-mono text-[#52525b] dark:text-[#8b949e]">
-              {activeFile.language}
-            </span>
-            <span className="text-[#a1a1aa] dark:text-[#484f58]">·</span>
-            <span className="text-xs font-mono tabular-nums">
-              <span className="text-[#1a7f37] dark:text-[#3fb950] font-semibold">+{activeFile.addedLineCount}</span>{' '}
-              <span className="text-[#cf222e] dark:text-[#f85149] font-semibold">-{activeFile.deletedLineCount}</span>
+            <span className="font-mono text-xs font-semibold text-[#1f2328] dark:text-[#e6edf3] truncate">
+              {displayPath}
             </span>
             {activeFile.isRename && (
-              <span className="text-[11px] text-[#71717a] dark:text-[#8b949e] font-mono">
-                (renamed from {activeFile.oldPath})
+              <span className="text-[11px] text-[#656d76] dark:text-[#8b949e] font-mono">
+                (from {activeFile.oldPath})
               </span>
             )}
+            <span className="text-[#d0d7de] dark:text-[#30363d]">·</span>
+            <span className="text-[11px] font-mono text-[#656d76] dark:text-[#8b949e]">
+              {activeFile.language}
+            </span>
+            <span className="text-[#d0d7de] dark:text-[#30363d]">·</span>
+
+            {/* GitHub Diffstat (+X -Y and 5 squares) */}
+            <div className="inline-flex items-center gap-1.5 font-mono text-[11px] tabular-nums">
+              <span className="text-[#1a7f37] dark:text-[#3fb950] font-semibold">+{activeFile.addedLineCount}</span>
+              <span className="text-[#cf222e] dark:text-[#f85149] font-semibold">-{activeFile.deletedLineCount}</span>
+              <span className="inline-flex items-center gap-[2px] ml-0.5" aria-hidden="true">
+                {Array.from({ length: addBlocks }).map((_, i) => (
+                  <span key={`a-${i}`} className="w-2 h-2 rounded-[1px] bg-[#1a7f37] dark:bg-[#3fb950]" />
+                ))}
+                {Array.from({ length: delBlocks }).map((_, i) => (
+                  <span key={`d-${i}`} className="w-2 h-2 rounded-[1px] bg-[#cf222e] dark:bg-[#f85149]" />
+                ))}
+                {Array.from({ length: neutralBlocks }).map((_, i) => (
+                  <span key={`n-${i}`} className="w-2 h-2 rounded-[1px] bg-[#d0d7de] dark:bg-[#30363d]" />
+                ))}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Right: Issue Stepper, View Switcher, & Shortcuts */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Issue Stepper */}
+        {/* Right: Compact Issue Stepper, Split/Unified Switcher & Shortcuts */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           {allOrderedFindings.length > 0 && (
-            <div className="inline-flex items-center bg-white dark:bg-[#0d1117] p-0.5 rounded-md border border-[#d4d4d8] dark:border-[#30363d] text-xs">
+            <div className="inline-flex items-center bg-white dark:bg-[#0d1117] h-6 px-0.5 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] text-[11px]">
               <button
                 onClick={handlePrevFinding}
-                className="p-1 rounded text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors"
+                className="p-0.5 rounded text-[#656d76] dark:text-[#8b949e] hover:text-[#1f2328] dark:hover:text-[#e6edf3] hover:bg-[#f3f4f6] dark:hover:bg-[#21262d] transition-colors"
                 title="Previous issue (k)"
                 aria-label="Previous finding"
               >
@@ -302,24 +339,23 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
               <button
                 onClick={handleNextFinding}
-                className="px-2 py-0.5 text-[11px] font-mono font-medium text-[#171717] dark:text-[#e6edf3] hover:text-[#0969da] dark:hover:text-[#58a6ff] transition-colors select-none whitespace-nowrap"
+                className="px-1.5 text-[11px] font-mono font-medium text-[#1f2328] dark:text-[#e6edf3] hover:text-[#0969da] dark:hover:text-[#2f81f7] transition-colors select-none whitespace-nowrap"
                 title="Click to jump to next issue (j)"
               >
                 {currentFindingIdx >= 0 ? (
                   <span>
-                    Issue <strong className="text-[#0969da] dark:text-[#58a6ff]">{currentFindingIdx + 1}</strong> of{' '}
-                    {allOrderedFindings.length}
+                    Issue <strong className="text-[#0969da] dark:text-[#2f81f7]">{currentFindingIdx + 1}</strong>/{allOrderedFindings.length}
                   </span>
                 ) : (
                   <span>
-                    Jump to Issue ({allOrderedFindings.length})
+                    Issues ({allOrderedFindings.length})
                   </span>
                 )}
               </button>
 
               <button
                 onClick={handleNextFinding}
-                className="p-1 rounded text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors"
+                className="p-0.5 rounded text-[#656d76] dark:text-[#8b949e] hover:text-[#1f2328] dark:hover:text-[#e6edf3] hover:bg-[#f3f4f6] dark:hover:bg-[#21262d] transition-colors"
                 title="Next issue (j)"
                 aria-label="Next finding"
               >
@@ -329,7 +365,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               {activeFindingId && (
                 <button
                   onClick={handleClearFinding}
-                  className="p-1 rounded text-[#71717a] hover:text-[#cf222e] dark:hover:text-[#f85149] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] transition-colors border-l border-[#e4e4e7] dark:border-[#30363d] ml-0.5"
+                  className="p-0.5 rounded text-[#656d76] hover:text-[#cf222e] dark:hover:text-[#f85149] hover:bg-[#f3f4f6] dark:hover:bg-[#21262d] transition-colors border-l border-[#d0d7de] dark:border-[#30363d] ml-0.5"
                   title="Clear active issue focus (Esc)"
                   aria-label="Clear active finding"
                 >
@@ -339,216 +375,338 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             </div>
           )}
 
-          {/* Unified vs Split View Switcher */}
-          <div className="inline-flex items-center bg-white dark:bg-[#0d1117] p-0.5 rounded-md border border-[#d4d4d8] dark:border-[#30363d] text-xs">
+          {/* Split (Side-by-Side) vs Unified View Switcher */}
+          <div className="inline-flex items-center bg-white dark:bg-[#0d1117] h-6 p-0.5 rounded-[6px] border border-[#d0d7de] dark:border-[#30363d] text-[11px]">
+            <button
+              onClick={() => setViewMode('split')}
+              className={`flex items-center gap-1 px-2 h-full rounded-[4px] transition-colors whitespace-nowrap ${
+                viewMode === 'split'
+                  ? 'bg-[#f6f8fa] dark:bg-[#21262d] text-[#1f2328] dark:text-[#e6edf3] font-semibold'
+                  : 'text-[#656d76] dark:text-[#8b949e] hover:text-[#1f2328] dark:hover:text-[#e6edf3]'
+              }`}
+              title="Side-by-side split diff view (s)"
+            >
+              <Columns className="w-3 h-3" />
+              <span>Split</span>
+            </button>
             <button
               onClick={() => setViewMode('unified')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1 px-2 h-full rounded-[4px] transition-colors whitespace-nowrap ${
                 viewMode === 'unified'
-                  ? 'bg-[#f4f4f5] dark:bg-[#21262d] text-[#171717] dark:text-[#e6edf3] font-semibold'
-                  : 'text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3]'
+                  ? 'bg-[#f6f8fa] dark:bg-[#21262d] text-[#1f2328] dark:text-[#e6edf3] font-semibold'
+                  : 'text-[#656d76] dark:text-[#8b949e] hover:text-[#1f2328] dark:hover:text-[#e6edf3]'
               }`}
               title="Unified diff view (u)"
             >
-              <AlignJustify className="w-3.5 h-3.5" />
+              <AlignJustify className="w-3 h-3" />
               <span>Unified</span>
-            </button>
-            <button
-              onClick={() => setViewMode('split')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors whitespace-nowrap ${
-                viewMode === 'split'
-                  ? 'bg-[#f4f4f5] dark:bg-[#21262d] text-[#171717] dark:text-[#e6edf3] font-semibold'
-                  : 'text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3]'
-              }`}
-              title="Split side-by-side diff view (s)"
-            >
-              <Columns className="w-3.5 h-3.5" />
-              <span>Split</span>
             </button>
           </div>
 
           {/* Keyboard Shortcuts Help Button */}
           <button
             onClick={() => setShowShortcutsModal(true)}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-white dark:bg-[#0d1117] hover:bg-[#f4f4f5] dark:hover:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] text-[#52525b] dark:text-[#8b949e] hover:text-[#171717] dark:hover:text-[#e6edf3] transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1 text-[11px] h-6 px-2 rounded-[6px] bg-white dark:bg-[#0d1117] hover:bg-[#f3f4f6] dark:hover:bg-[#21262d] border border-[#d0d7de] dark:border-[#30363d] text-[#656d76] dark:text-[#8b949e] hover:text-[#1f2328] dark:hover:text-[#e6edf3] transition-colors whitespace-nowrap"
             title="Keyboard Shortcuts (?)"
             aria-label="View Keyboard Shortcuts"
           >
-            <Keyboard className="w-3.5 h-3.5" />
+            <Keyboard className="w-3 h-3" />
             <span className="hidden sm:inline">Shortcuts</span>
           </button>
         </div>
       </div>
 
-      {/* Diff Code Body */}
-      <div 
-        ref={diffContainerRef}
-        className="overflow-x-auto font-mono text-xs max-h-[calc(100vh-14rem)] overflow-y-auto bg-white dark:bg-[#0d1117]"
-      >
-        {activeFile.hunks.map((hunk, hunkIdx) => {
-          return (
-            <div key={hunkIdx} className="bg-white dark:bg-[#0d1117]">
-              {/* GitHub-Style Hunk Header */}
-              <div className="bg-[#f6f8fa] dark:bg-[#161b22] text-[#57606a] dark:text-[#8b949e] px-4 py-1.5 border-y border-[#e4e4e7] dark:border-[#30363d] flex items-center justify-between font-mono text-[11px] select-none sticky top-0 z-10">
-                <span className="font-semibold text-[#0969da] dark:text-[#58a6ff]">{hunk.header}</span>
-                {hunk.enclosingScope && (
-                  <span className="text-[#57606a] dark:text-[#8b949e] truncate max-w-md hidden sm:inline">
-                    {hunk.enclosingScope}
-                  </span>
-                )}
-              </div>
+      {/* Single Shared Horizontal Scroll Container for Entire Diff Table */}
+      {!isFileCollapsed && (
+        <div
+          ref={diffContainerRef}
+          data-testid="diff-scroll-container"
+          className="w-full overflow-x-auto bg-white dark:bg-[#0d1117] rounded-b-[6px]"
+        >
+          {viewMode === 'split' ? (
+            /* SIDE-BY-SIDE (SPLIT) DIFF TABLE — Single Shared Container, Lockstep Vertical Alignment */
+            <table
+              data-testid="split-diff-table"
+              className="w-full min-w-[760px] border-collapse font-mono text-[12px] leading-[20px]"
+            >
+              <colgroup>
+                <col className="w-[44px]" />
+                <col className="w-[20px]" />
+                <col className="w-1/2" />
+                <col className="w-[44px]" />
+                <col className="w-[20px]" />
+                <col className="w-1/2" />
+              </colgroup>
 
-              {/* View Mode A: Unified View */}
-              {viewMode === 'unified' ? (
-                <div>
-                  {hunk.lines.map((line, lineIdx) => {
-                    const lineNum = line.newLineNumber;
-                    const lineFindings = lineNum ? findingsByLineNumber.get(lineNum) : undefined;
-                    const isAdded = line.type === 'ADDED';
-                    const isDeleted = line.type === 'DELETED';
-                    const hasActiveFinding = lineFindings?.some((f) => f.id === activeFindingId);
+              {/* Left (Original / Before) & Right (Modified / After) Panel Headers */}
+              <thead>
+                <tr className="bg-[#f6f8fa] dark:bg-[#161b22] border-b border-[#d0d7de] dark:border-[#30363d] text-[11px] text-[#656d76] dark:text-[#8b949e] select-none">
+                  <th
+                    colSpan={3}
+                    className="py-1 px-3 text-left font-normal border-r border-[#d0d7de] dark:border-[#30363d]"
+                  >
+                    <div className="flex items-center justify-between gap-2 truncate">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="font-semibold text-[#1f2328] dark:text-[#e6edf3]">
+                          Original (Before)
+                        </span>
+                        <span>·</span>
+                        <span className="truncate">a/{oldDisplayPath}</span>
+                      </div>
+                      <span className="text-[#cf222e] dark:text-[#f85149] font-semibold tabular-nums flex-shrink-0">
+                        -{activeFile.deletedLineCount} removed
+                      </span>
+                    </div>
+                  </th>
+                  <th colSpan={3} className="py-1 px-3 text-left font-normal">
+                    <div className="flex items-center justify-between gap-2 truncate">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="font-semibold text-[#1f2328] dark:text-[#e6edf3]">
+                          Modified (After)
+                        </span>
+                        <span>·</span>
+                        <span className="truncate">b/{newDisplayPath}</span>
+                      </div>
+                      <span className="text-[#1a7f37] dark:text-[#3fb950] font-semibold tabular-nums flex-shrink-0">
+                        +{activeFile.addedLineCount} added
+                      </span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
 
-                    let rowBg = 'hover:bg-[#f6f8fa] dark:hover:bg-[#161b22]/70 text-[#1f2328] dark:text-[#e6edf3]';
-                    let gutterClass = 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]';
-                    let symbolColor = 'text-[#6e7781] dark:text-[#6e7681]';
-                    let symbol = ' ';
+              <tbody>
+                {activeFile.hunks.map((hunk, hunkIdx) => {
+                  const splitRows = alignSplitDiffHunk(hunk, findingsByLineNumber);
 
-                    if (isAdded) {
-                      rowBg = 'gh-diff-add text-[#1f2328] dark:text-[#e6edf3]';
-                      gutterClass = 'gh-diff-add-gutter';
-                      symbolColor = 'text-[#116329] dark:text-[#3fb950] font-semibold';
-                      symbol = '+';
-                    } else if (isDeleted) {
-                      rowBg = 'gh-diff-del text-[#1f2328] dark:text-[#e6edf3]';
-                      gutterClass = 'gh-diff-del-gutter';
-                      symbolColor = 'text-[#cf222e] dark:text-[#f85149] font-semibold';
-                      symbol = '-';
-                    }
-
-                    if (hasActiveFinding) {
-                      rowBg = 'bg-[#ddf4ff] dark:bg-[#388bfd]/20';
-                    }
-
-                    return (
-                      <React.Fragment key={lineIdx}>
-                        <div
-                          id={line.newLineNumber ? `line-new-${line.newLineNumber}` : undefined}
-                          className={`flex items-stretch transition-colors ${rowBg}`}
+                  return (
+                    <React.Fragment key={hunkIdx}>
+                      {/* GitHub Hunk Header Row */}
+                      <tr className="gh-diff-hunk border-y border-[#d0d7de] dark:border-[#30363d] text-[11px] select-none">
+                        <td
+                          colSpan={2}
+                          className="gh-diff-hunk-gutter py-1 px-2 text-center font-mono border-r border-[#d0d7de]/70 dark:border-[#30363d]/70"
                         >
-                          {/* Old Line # */}
-                          <div className={`w-12 py-0.5 px-2 text-right select-none font-mono text-[11px] tabular-nums border-r border-[#e4e4e7]/70 dark:border-[#30363d]/70 ${gutterClass}`}>
-                            {line.oldLineNumber || ''}
-                          </div>
-                          {/* New Line # */}
-                          <div className={`w-12 py-0.5 px-2 text-right select-none font-mono text-[11px] tabular-nums border-r border-[#e4e4e7] dark:border-[#30363d] ${gutterClass}`}>
-                            {line.newLineNumber || ''}
-                          </div>
-                          {/* +/- Symbol */}
-                          <div className={`w-6 py-0.5 text-center select-none ${symbolColor}`}>
-                            {symbol}
-                          </div>
-                          {/* Code Content with Syntax Tokens */}
-                          <div className="flex-1 py-0.5 px-3 whitespace-pre overflow-x-auto leading-5">
-                            {renderLineContent(line.content)}
-                          </div>
-                        </div>
+                          @@
+                        </td>
+                        <td colSpan={4} className="py-1 px-3 font-mono">
+                          <span className="text-[#0969da] dark:text-[#58a6ff] font-medium">
+                            {hunk.header}
+                          </span>
+                          {hunk.enclosingScope && !hunk.header.includes(hunk.enclosingScope) && (
+                            <span className="ml-2 text-[#656d76] dark:text-[#8b949e]">
+                              {hunk.enclosingScope}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
 
-                        {/* Inline Findings Pinned Below Line */}
-                        {lineFindings && lineFindings.length > 0 && (
-                          <div className="bg-[#f6f8fa] dark:bg-[#0d1117] border-y border-[#e4e4e7] dark:border-[#30363d] py-1">
-                            {lineFindings.map((finding) => (
-                              <InlineFindingCard
-                                key={finding.id}
-                                finding={finding}
-                                isActive={finding.id === activeFindingId}
-                              />
-                            ))}
-                          </div>
+                      {/* Side-by-Side Diff Rows */}
+                      {splitRows.map((row: SplitDiffRow) => {
+                        const hasActiveFinding = row.findings?.some((f) => f.id === activeFindingId);
+                        const isLeftDeleted = Boolean(row.left && (row.type === 'deleted' || row.type === 'modified'));
+                        const isRightAdded = Boolean(row.right && (row.type === 'added' || row.type === 'modified'));
+
+                        const leftCellBg = isLeftDeleted
+                          ? 'gh-diff-del text-[#1f2328] dark:text-[#e6edf3]'
+                          : !row.left
+                          ? 'gh-diff-empty select-none'
+                          : 'bg-white dark:bg-[#0d1117] text-[#1f2328] dark:text-[#e6edf3]';
+
+                        const leftGutterBg = isLeftDeleted
+                          ? 'gh-diff-del-gutter'
+                          : !row.left
+                          ? 'gh-diff-empty text-transparent'
+                          : 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]';
+
+                        const rightCellBg = isRightAdded
+                          ? 'gh-diff-add text-[#1f2328] dark:text-[#e6edf3]'
+                          : !row.right
+                          ? 'gh-diff-empty select-none'
+                          : 'bg-white dark:bg-[#0d1117] text-[#1f2328] dark:text-[#e6edf3]';
+
+                        const rightGutterBg = isRightAdded
+                          ? 'gh-diff-add-gutter'
+                          : !row.right
+                          ? 'gh-diff-empty text-transparent'
+                          : 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]';
+
+                        return (
+                          <React.Fragment key={row.id}>
+                            <tr
+                              id={row.right?.newLineNumber ? `line-new-${row.right.newLineNumber}` : undefined}
+                              className={hasActiveFinding ? 'ring-1 ring-inset ring-[#0969da] dark:ring-[#2f81f7]' : ''}
+                            >
+                              {/* Left Panel: Old Line Number */}
+                              <td
+                                className={`w-[44px] py-0 px-2 text-right select-none text-[11px] leading-[20px] tabular-nums border-r border-[#d0d7de]/60 dark:border-[#30363d]/60 align-top ${leftGutterBg}`}
+                              >
+                                {row.left?.oldLineNumber ?? ''}
+                              </td>
+
+                              {/* Left Panel: Deletion Sign (-) */}
+                              <td
+                                className={`w-[20px] py-0 text-center select-none text-[12px] leading-[20px] align-top ${leftCellBg} ${
+                                  isLeftDeleted ? 'text-[#cf222e] dark:text-[#f85149] font-semibold' : 'text-transparent'
+                                }`}
+                              >
+                                {isLeftDeleted ? '-' : ' '}
+                              </td>
+
+                              {/* Left Panel: Original Code Content */}
+                              <td
+                                className={`py-0 px-2 whitespace-pre text-[12px] leading-[20px] align-top border-r border-[#d0d7de] dark:border-[#30363d] ${leftCellBg}`}
+                              >
+                                {row.left ? renderLineContent(row.left.content) : <span>&nbsp;</span>}
+                              </td>
+
+                              {/* Right Panel: New Line Number */}
+                              <td
+                                className={`w-[44px] py-0 px-2 text-right select-none text-[11px] leading-[20px] tabular-nums border-r border-[#d0d7de]/60 dark:border-[#30363d]/60 align-top ${rightGutterBg}`}
+                              >
+                                {row.right?.newLineNumber ?? ''}
+                              </td>
+
+                              {/* Right Panel: Addition Sign (+) */}
+                              <td
+                                className={`w-[20px] py-0 text-center select-none text-[12px] leading-[20px] align-top ${rightCellBg} ${
+                                  isRightAdded ? 'text-[#1a7f37] dark:text-[#3fb950] font-semibold' : 'text-transparent'
+                                }`}
+                              >
+                                {isRightAdded ? '+' : ' '}
+                              </td>
+
+                              {/* Right Panel: Modified Code Content */}
+                              <td
+                                className={`py-0 px-2 whitespace-pre text-[12px] leading-[20px] align-top ${rightCellBg}`}
+                              >
+                                {row.right ? renderLineContent(row.right.content) : <span>&nbsp;</span>}
+                              </td>
+                            </tr>
+
+                            {/* Inline Review Findings Row */}
+                            {row.findings && row.findings.length > 0 && (
+                              <tr className="bg-[#f6f8fa] dark:bg-[#0d1117] border-y border-[#d0d7de] dark:border-[#30363d]">
+                                <td colSpan={6} className="p-0">
+                                  {row.findings.map((finding) => (
+                                    <InlineFindingCard
+                                      key={finding.id}
+                                      finding={finding}
+                                      isActive={finding.id === activeFindingId}
+                                    />
+                                  ))}
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            /* UNIFIED DIFF TABLE — Single Shared Scroll Container */
+            <table
+              data-testid="unified-diff-table"
+              className="w-full min-w-[640px] border-collapse font-mono text-[12px] leading-[20px]"
+            >
+              <colgroup>
+                <col className="w-[44px]" />
+                <col className="w-[44px]" />
+                <col className="w-[20px]" />
+                <col />
+              </colgroup>
+              <tbody>
+                {activeFile.hunks.map((hunk, hunkIdx) => (
+                  <React.Fragment key={hunkIdx}>
+                    <tr className="gh-diff-hunk border-y border-[#d0d7de] dark:border-[#30363d] text-[11px] select-none">
+                      <td
+                        colSpan={2}
+                        className="gh-diff-hunk-gutter py-1 px-2 text-center font-mono border-r border-[#d0d7de]/70 dark:border-[#30363d]/70"
+                      >
+                        @@
+                      </td>
+                      <td colSpan={2} className="py-1 px-3 font-mono">
+                        <span className="text-[#0969da] dark:text-[#58a6ff] font-medium">
+                          {hunk.header}
+                        </span>
+                        {hunk.enclosingScope && !hunk.header.includes(hunk.enclosingScope) && (
+                          <span className="ml-2 text-[#656d76] dark:text-[#8b949e]">
+                            {hunk.enclosingScope}
+                          </span>
                         )}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              ) : (
-                /* View Mode B: Split Side-by-Side View */
-                <div>
-                  {alignSplitDiffHunk(hunk, findingsByLineNumber).map((row: SplitDiffRow) => {
-                    const hasActiveFinding = row.findings?.some((f) => f.id === activeFindingId);
-                    const isLeftDeleted = row.left && (row.type === 'deleted' || row.type === 'modified');
-                    const isRightAdded = row.right && (row.type === 'added' || row.type === 'modified');
+                      </td>
+                    </tr>
 
-                    return (
-                      <React.Fragment key={row.id}>
-                        <div className={`grid grid-cols-2 divide-x divide-[#e4e4e7] dark:divide-[#30363d] ${hasActiveFinding ? 'bg-[#ddf4ff] dark:bg-[#388bfd]/20' : ''}`}>
-                          {/* Left Column: Original / Deletions */}
-                          <div
-                            className={`flex items-stretch min-w-0 ${
-                              isLeftDeleted
-                                ? 'gh-diff-del text-[#1f2328] dark:text-[#e6edf3]'
-                                : !row.left
-                                ? 'bg-[#f6f8fa] dark:bg-[#161b22]/50 select-none'
-                                : 'hover:bg-[#f6f8fa] dark:hover:bg-[#161b22]/70 text-[#1f2328] dark:text-[#e6edf3]'
-                            }`}
+                    {hunk.lines.map((line, lineIdx) => {
+                      const lineNum = line.newLineNumber;
+                      const lineFindings = lineNum ? findingsByLineNumber.get(lineNum) : undefined;
+                      const isAdded = line.type === 'ADDED';
+                      const isDeleted = line.type === 'DELETED';
+                      const hasActiveFinding = lineFindings?.some((f) => f.id === activeFindingId);
+
+                      let rowBg = 'bg-white dark:bg-[#0d1117] text-[#1f2328] dark:text-[#e6edf3]';
+                      let gutterClass = 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]';
+                      let symbolColor = 'text-transparent';
+                      let symbol = ' ';
+
+                      if (isAdded) {
+                        rowBg = 'gh-diff-add text-[#1f2328] dark:text-[#e6edf3]';
+                        gutterClass = 'gh-diff-add-gutter';
+                        symbolColor = 'text-[#1a7f37] dark:text-[#3fb950] font-semibold';
+                        symbol = '+';
+                      } else if (isDeleted) {
+                        rowBg = 'gh-diff-del text-[#1f2328] dark:text-[#e6edf3]';
+                        gutterClass = 'gh-diff-del-gutter';
+                        symbolColor = 'text-[#cf222e] dark:text-[#f85149] font-semibold';
+                        symbol = '-';
+                      }
+
+                      return (
+                        <React.Fragment key={lineIdx}>
+                          <tr
+                            id={line.newLineNumber ? `line-new-${line.newLineNumber}` : undefined}
+                            className={`${rowBg} ${hasActiveFinding ? 'ring-1 ring-inset ring-[#0969da] dark:ring-[#2f81f7]' : ''}`}
                           >
-                            <div className={`w-12 py-0.5 px-2 text-right select-none text-[11px] font-mono tabular-nums border-r border-[#e4e4e7] dark:border-[#30363d] flex-shrink-0 ${
-                              isLeftDeleted ? 'gh-diff-del-gutter' : 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]'
-                            }`}>
-                              {row.left?.oldLineNumber || ''}
-                            </div>
-                            <div className="w-6 py-0.5 text-center select-none text-[#cf222e] dark:text-[#f85149] font-semibold flex-shrink-0">
-                              {isLeftDeleted ? '-' : ' '}
-                            </div>
-                            <div className="flex-1 py-0.5 px-3 whitespace-pre overflow-x-auto leading-5">
-                              {row.left ? renderLineContent(row.left.content) : <span>&nbsp;</span>}
-                            </div>
-                          </div>
+                            <td className={`w-[44px] py-0 px-2 text-right select-none text-[11px] leading-[20px] tabular-nums border-r border-[#d0d7de]/60 dark:border-[#30363d]/60 align-top ${gutterClass}`}>
+                              {line.oldLineNumber ?? ''}
+                            </td>
+                            <td className={`w-[44px] py-0 px-2 text-right select-none text-[11px] leading-[20px] tabular-nums border-r border-[#d0d7de] dark:border-[#30363d] align-top ${gutterClass}`}>
+                              {line.newLineNumber ?? ''}
+                            </td>
+                            <td className={`w-[20px] py-0 text-center select-none text-[12px] leading-[20px] align-top ${symbolColor}`}>
+                              {symbol}
+                            </td>
+                            <td className="py-0 px-2 whitespace-pre text-[12px] leading-[20px] align-top">
+                              {renderLineContent(line.content)}
+                            </td>
+                          </tr>
 
-                          {/* Right Column: Modified / Additions */}
-                          <div
-                            id={row.right?.newLineNumber ? `line-new-${row.right.newLineNumber}` : undefined}
-                            className={`flex items-stretch min-w-0 ${
-                              isRightAdded
-                                ? 'gh-diff-add text-[#1f2328] dark:text-[#e6edf3]'
-                                : !row.right
-                                ? 'bg-[#f6f8fa] dark:bg-[#161b22]/50 select-none'
-                                : 'hover:bg-[#f6f8fa] dark:hover:bg-[#161b22]/70 text-[#1f2328] dark:text-[#e6edf3]'
-                            }`}
-                          >
-                            <div className={`w-12 py-0.5 px-2 text-right select-none text-[11px] font-mono tabular-nums border-r border-[#e4e4e7] dark:border-[#30363d] flex-shrink-0 ${
-                              isRightAdded ? 'gh-diff-add-gutter' : 'bg-[#f6f8fa] dark:bg-[#0d1117] text-[#6e7781] dark:text-[#6e7681]'
-                            }`}>
-                              {row.right?.newLineNumber || ''}
-                            </div>
-                            <div className="w-6 py-0.5 text-center select-none text-[#116329] dark:text-[#3fb950] font-semibold flex-shrink-0">
-                              {isRightAdded ? '+' : ' '}
-                            </div>
-                            <div className="flex-1 py-0.5 px-3 whitespace-pre overflow-x-auto leading-5">
-                              {row.right ? renderLineContent(row.right.content) : <span>&nbsp;</span>}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Inline Findings Pinned Below Split Row */}
-                        {row.findings && row.findings.length > 0 && (
-                          <div className="bg-[#f6f8fa] dark:bg-[#0d1117] border-y border-[#e4e4e7] dark:border-[#30363d] py-1">
-                            {row.findings.map((finding) => (
-                              <InlineFindingCard
-                                key={finding.id}
-                                finding={finding}
-                                isActive={finding.id === activeFindingId}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                          {lineFindings && lineFindings.length > 0 && (
+                            <tr className="bg-[#f6f8fa] dark:bg-[#0d1117] border-y border-[#d0d7de] dark:border-[#30363d]">
+                              <td colSpan={4} className="p-0">
+                                {lineFindings.map((finding) => (
+                                  <InlineFindingCard
+                                    key={finding.id}
+                                    finding={finding}
+                                    isActive={finding.id === activeFindingId}
+                                  />
+                                ))}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
 
       {/* Keyboard Shortcuts Help Dialog */}
       {showShortcutsModal && (
@@ -560,72 +718,72 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           onClick={() => setShowShortcutsModal(false)}
         >
           <div
-            className="bg-white dark:bg-[#161b22] border border-[#e4e4e7] dark:border-[#30363d] rounded-lg shadow-xl max-w-md w-full p-6 text-[#171717] dark:text-[#e6edf3]"
+            className="bg-white dark:bg-[#161b22] border border-[#d0d7de] dark:border-[#30363d] rounded-[6px] shadow-xl max-w-md w-full p-4 text-[#1f2328] dark:text-[#e6edf3]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-[#e4e4e7] dark:border-[#30363d]">
+            <div className="flex items-center justify-between pb-2.5 border-b border-[#d0d7de] dark:border-[#30363d]">
               <div className="flex items-center gap-2">
-                <Keyboard className="w-4 h-4 text-[#52525b] dark:text-[#8b949e]" />
-                <h3 className="text-sm font-semibold">Keyboard Shortcuts</h3>
+                <Keyboard className="w-4 h-4 text-[#656d76] dark:text-[#8b949e]" />
+                <h3 className="text-xs font-semibold">Keyboard Shortcuts</h3>
               </div>
               <button
                 onClick={() => setShowShortcutsModal(false)}
-                className="p-1 rounded text-[#71717a] hover:text-[#171717] dark:hover:text-[#e6edf3] transition-colors"
+                className="p-1 rounded text-[#656d76] hover:text-[#1f2328] dark:hover:text-[#e6edf3] transition-colors"
                 aria-label="Close shortcuts modal"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="mt-4 space-y-2.5 text-xs">
-              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
-                <span className="text-[#52525b] dark:text-[#8b949e]">Jump to next issue</span>
-                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px] font-semibold">
+            <div className="mt-3 space-y-1.5 text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-[#d8dee4] dark:border-[#21262d]">
+                <span className="text-[#656d76] dark:text-[#8b949e]">Jump to next issue</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-[#f6f8fa] dark:bg-[#21262d] border border-[#d0d7de] dark:border-[#30363d] font-mono text-[11px] font-semibold">
                   j
                 </kbd>
               </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
-                <span className="text-[#52525b] dark:text-[#8b949e]">Jump to previous issue</span>
-                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px] font-semibold">
+              <div className="flex items-center justify-between py-1 border-b border-[#d8dee4] dark:border-[#21262d]">
+                <span className="text-[#656d76] dark:text-[#8b949e]">Jump to previous issue</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-[#f6f8fa] dark:bg-[#21262d] border border-[#d0d7de] dark:border-[#30363d] font-mono text-[11px] font-semibold">
                   k
                 </kbd>
               </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
-                <span className="text-[#52525b] dark:text-[#8b949e]">Clear active issue highlight</span>
-                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px]">
+              <div className="flex items-center justify-between py-1 border-b border-[#d8dee4] dark:border-[#21262d]">
+                <span className="text-[#656d76] dark:text-[#8b949e]">Clear active issue highlight</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-[#f6f8fa] dark:bg-[#21262d] border border-[#d0d7de] dark:border-[#30363d] font-mono text-[11px]">
                   Esc
                 </kbd>
               </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
-                <span className="text-[#52525b] dark:text-[#8b949e]">Unified diff view</span>
-                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px]">
-                  u
-                </kbd>
-              </div>
-
-              <div className="flex items-center justify-between py-1.5 border-b border-[#f4f4f5] dark:border-[#21262d]">
-                <span className="text-[#52525b] dark:text-[#8b949e]">Split side-by-side diff view</span>
-                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px]">
+              <div className="flex items-center justify-between py-1 border-b border-[#d8dee4] dark:border-[#21262d]">
+                <span className="text-[#656d76] dark:text-[#8b949e]">Side-by-side split diff view</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-[#f6f8fa] dark:bg-[#21262d] border border-[#d0d7de] dark:border-[#30363d] font-mono text-[11px]">
                   s
                 </kbd>
               </div>
 
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-[#52525b] dark:text-[#8b949e]">Toggle shortcuts help</span>
-                <kbd className="px-2 py-0.5 rounded bg-[#f4f4f5] dark:bg-[#21262d] border border-[#d4d4d8] dark:border-[#30363d] font-mono text-[11px]">
+              <div className="flex items-center justify-between py-1 border-b border-[#d8dee4] dark:border-[#21262d]">
+                <span className="text-[#656d76] dark:text-[#8b949e]">Unified diff view</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-[#f6f8fa] dark:bg-[#21262d] border border-[#d0d7de] dark:border-[#30363d] font-mono text-[11px]">
+                  u
+                </kbd>
+              </div>
+
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[#656d76] dark:text-[#8b949e]">Toggle shortcuts help</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-[#f6f8fa] dark:bg-[#21262d] border border-[#d0d7de] dark:border-[#30363d] font-mono text-[11px]">
                   ?
                 </kbd>
               </div>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-[#e4e4e7] dark:border-[#30363d] flex justify-between items-center text-[11px] text-[#71717a] dark:text-[#8b949e]">
-              <span>Shortcuts pause automatically when typing in inputs.</span>
+            <div className="mt-4 pt-2.5 border-t border-[#d0d7de] dark:border-[#30363d] flex justify-between items-center text-[11px] text-[#656d76] dark:text-[#8b949e]">
+              <span>Shortcuts pause when typing in inputs.</span>
               <button
                 onClick={() => setShowShortcutsModal(false)}
-                className="px-3 py-1.5 rounded-md bg-[#171717] hover:bg-[#27272a] text-white dark:bg-[#21262d] dark:hover:bg-[#30363d] dark:text-[#e6edf3] font-medium transition-colors text-xs"
+                className="px-2.5 py-1 rounded-[6px] bg-[#f6f8fa] hover:bg-[#f3f4f6] text-[#1f2328] dark:bg-[#21262d] dark:hover:bg-[#30363d] dark:text-[#e6edf3] border border-[#d0d7de] dark:border-[#30363d] font-medium transition-colors text-xs"
               >
                 Close
               </button>
